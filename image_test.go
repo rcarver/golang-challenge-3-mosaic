@@ -2,6 +2,7 @@ package main
 
 import (
 	"image"
+	"image/color"
 	"testing"
 )
 
@@ -34,8 +35,8 @@ func Test_PixelGrid_Blocks(t *testing.T) {
 	}
 	for i, test := range tests {
 		want := image.Rectangle{
-			image.Point{test.b[0], test.b[1]},
-			image.Point{test.b[2], test.b[3]},
+			image.Pt(test.b[0], test.b[1]),
+			image.Pt(test.b[2], test.b[3]),
 		}
 		got := blocks.rects[i]
 		if got != want {
@@ -45,5 +46,21 @@ func Test_PixelGrid_Blocks(t *testing.T) {
 		if at != want {
 			t.Errorf("block at %d,%d, got %v want %v", test.x, test.y, at, want)
 		}
+	}
+}
+
+func Test_AverageColorOfRect_uniform(t *testing.T) {
+	c := color.RGBA{100, 120, 140, 255}
+	m := image.NewUniform(c)
+	a := AverageColorOfRect(
+		m,
+		image.Rectangle{
+			image.Pt(0, 0),
+			image.Pt(100, 100),
+		},
+		20,
+	)
+	if a != c {
+		t.Errorf("AverageColorOfRect() got %v, want %v", a, c)
 	}
 }

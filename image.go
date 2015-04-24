@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"fmt"
 	"image"
 	"image/color"
 	_ "image/jpeg"
@@ -65,25 +66,29 @@ func (g PixelGrid) Blocks(bounds image.Rectangle) PixelGridBlocks {
 	return PixelGridBlocks{g.W, rects}
 }
 
-func colorOfRange(m image.Image, bounds image.Rectangle, step int) color.Color {
+// AverageColorOfRect calcluates the average color of an area of an image. Step
+// determines how many pixels to sample, 1 being every pixel, 10 being every
+// 10th pixel.
+func AverageColorOfRect(m image.Image, bounds image.Rectangle, step int) color.Color {
 	if step <= 0 {
-		step = 10
+		step = 1
 	}
-	r, g, b := uint16(0), uint16(0), uint16(0)
-	c := uint16(0)
+	r, g, b := 0, 0, 0
+	c := 0
 	for y := bounds.Min.Y; y < bounds.Max.Y; y += step {
 		for x := bounds.Min.X; x < bounds.Max.X; x += step {
 			xr, xg, xb, _ := m.At(x, y).RGBA()
-			r += uint16(xr)
-			g += uint16(xg)
-			b += uint16(xb)
+			r += int(xr)
+			g += int(xg)
+			b += int(xb)
 			c++
+			fmt.Printf("%d: %d %d %d\n", c, xr, xg, xb)
 		}
 	}
-	return color.RGBA64{r / c, g / c, b / c, 255}
+	return color.RGBA{uint8(r / c), uint8(g / c), uint8(b / c), 255}
 }
 
-func readImage(path string) (image.Image, error) {
+func imageFromFile(path string) (image.Image, error) {
 	fi, err := os.Open(path)
 	defer fi.Close()
 	if err != nil {
