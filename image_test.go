@@ -3,15 +3,13 @@ package main
 import (
 	"image"
 	"image/color"
+	"image/draw"
 	"testing"
 )
 
 func Test_PixelGrid_Blocks(t *testing.T) {
 	g := PixelGrid{2, 3}
-	bounds := image.Rectangle{
-		image.Point{0, 0},
-		image.Point{40, 30},
-	}
+	bounds := image.Rect(0, 0, 40, 30)
 	// blocks should be w: 20, h: 10
 	blocks := g.Blocks(bounds)
 
@@ -34,10 +32,10 @@ func Test_PixelGrid_Blocks(t *testing.T) {
 		{1, 2, [4]int{20, 20, 40, 30}},
 	}
 	for i, test := range tests {
-		want := image.Rectangle{
-			image.Pt(test.b[0], test.b[1]),
-			image.Pt(test.b[2], test.b[3]),
-		}
+		want := image.Rect(
+			test.b[0], test.b[1],
+			test.b[2], test.b[3],
+		)
 		got := blocks.rects[i]
 		if got != want {
 			t.Errorf("block %d, got %v, want %v", i, got, want)
@@ -52,15 +50,31 @@ func Test_PixelGrid_Blocks(t *testing.T) {
 func Test_AverageColorOfRect_uniform(t *testing.T) {
 	c := color.RGBA{100, 120, 140, 255}
 	m := image.NewUniform(c)
-	a := AverageColorOfRect(
-		m,
-		image.Rectangle{
-			image.Pt(0, 0),
-			image.Pt(100, 100),
-		},
-		20,
-	)
+	a := AverageColorOfRect(m, image.Rect(0, 0, 100, 100), 20)
 	if a != c {
 		t.Errorf("AverageColorOfRect() got %v, want %v", a, c)
+	}
+}
+
+func Test_AverageColorOfRect_mixed(t *testing.T) {
+	// Draw an image with the left side blue and the right side red.
+	m := image.NewRGBA(image.Rect(0, 0, 640, 480))
+
+	left := image.Rect(0, 0, 320, 480)
+	right := image.Rect(320, 0, 640, 480)
+
+	blue := color.RGBA{0, 0, 255, 255}
+	red := color.RGBA{255, 0, 0, 255}
+
+	draw.Draw(m, left, &image.Uniform{blue}, image.ZP, draw.Src)
+	draw.Draw(m, right, &image.Uniform{red}, image.ZP, draw.Src)
+
+	// Average over the entire image.
+	a := AverageColorOfRect(m, m.Bounds(), 20)
+
+	// Average is purple.
+	purple := color.RGBA{255, 0, 255, 255}
+	if want := purple; a != want {
+		t.Errorf("AverageColorOfRect() got %v, want %v", a, want)
 	}
 }

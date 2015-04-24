@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"fmt"
 	"image"
 	"image/color"
 	_ "image/jpeg"
@@ -82,7 +81,7 @@ func AverageColorOfRect(m image.Image, bounds image.Rectangle, step int) color.C
 			g += int(xg)
 			b += int(xb)
 			c++
-			fmt.Printf("%d: %d %d %d\n", c, xr, xg, xb)
+			//fmt.Printf("%d: %d %d %d\n", c, xr, xg, xb)
 		}
 	}
 	return color.RGBA{uint8(r / c), uint8(g / c), uint8(b / c), 255}
