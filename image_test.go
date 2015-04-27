@@ -47,6 +47,37 @@ func Test_PixelGrid_Blocks(t *testing.T) {
 	}
 }
 
+func Test_PixelGrid_ColorPalette(t *testing.T) {
+	// Draw an image with the left side blue and the right side red.
+	m := image.NewRGBA(image.Rect(0, 0, 640, 480))
+
+	left := image.Rect(0, 0, 320, 480)
+	right := image.Rect(320, 0, 640, 480)
+
+	blue := color.RGBA{0, 0, 255, 255}
+	red := color.RGBA{255, 0, 0, 255}
+	purple := color.RGBA{255, 0, 255, 255}
+
+	draw.Draw(m, left, &image.Uniform{blue}, image.ZP, draw.Src)
+	draw.Draw(m, right, &image.Uniform{red}, image.ZP, draw.Src)
+
+	// Palette of image thats 3x2 units.
+	grid := PixelGrid{3, 2}
+	palette := grid.ColorPalette(m)
+
+	if want := 3; len(palette) != want {
+		t.Fatalf("len(palette) got %d, want %d", len(palette), want)
+	}
+	tests := []color.RGBA{
+		blue, purple, red,
+	}
+	for i, want := range tests {
+		got := palette[i]
+		if got != want {
+			t.Errorf("palette %d, got %v, want %v", i, got, want)
+		}
+	}
+}
 func Test_AverageColorOfRect_uniform(t *testing.T) {
 	c := color.RGBA{100, 120, 140, 255}
 	m := image.NewUniform(c)

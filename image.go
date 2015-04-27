@@ -65,6 +65,21 @@ func (g PixelGrid) Blocks(bounds image.Rectangle) PixelGridBlocks {
 	return PixelGridBlocks{g.W, rects}
 }
 
+// ColorPalette returns the color palette of m, as viewed by the pixel grid.
+func (g PixelGrid) ColorPalette(m image.Image) color.Palette {
+	blocks := g.Blocks(m.Bounds())
+	palette := make(color.Palette, 0, len(blocks.rects))
+	uniq := make(map[color.Color]struct{})
+	for _, r := range blocks.rects {
+		c := AverageColorOfRect(m, r, 10)
+		if _, ok := uniq[c]; !ok {
+			palette = append(palette, c)
+			uniq[c] = struct{}{}
+		}
+	}
+	return palette
+}
+
 // AverageColorOfRect calcluates the average color of an area of an image. Step
 // determines how many pixels to sample, 1 being every pixel, 10 being every
 // 10th pixel.
