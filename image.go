@@ -6,6 +6,7 @@ import (
 	"image/color"
 	_ "image/jpeg"
 	"io"
+	"math"
 	"os"
 )
 
@@ -78,6 +79,17 @@ func (g PixelGrid) ColorPalette(m image.Image) color.Palette {
 		}
 	}
 	return palette
+}
+
+// PalettedImage returns a paletted image calculated from the input image. The
+// resulting image's dimensions are maxWidth or maxHeight with the other
+// dimension sized proportionally.
+func (g PixelGrid) PalettedImage(m image.Image, maxWidth, maxHeight int) *image.Paletted {
+	gw, gh := float64(g.W), float64(g.H)
+	w, h := float64(maxWidth)/gw, float64(maxHeight)/gh
+	ratio := math.Min(w, h)
+	bounds := image.Rect(0, 0, int(math.Floor(ratio*gw)), int(math.Floor(ratio*gh)))
+	return image.NewPaletted(bounds, g.ColorPalette(m))
 }
 
 // AverageColorOfRect calcluates the average color of an area of an image. Step

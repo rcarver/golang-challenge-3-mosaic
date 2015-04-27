@@ -78,6 +78,36 @@ func Test_PixelGrid_ColorPalette(t *testing.T) {
 		}
 	}
 }
+
+func Test_PixelGrid_PalettedImage(t *testing.T) {
+	// Draw an image with the left side blue and the right side red.
+	m := image.NewRGBA(image.Rect(0, 0, 640, 480))
+
+	left := image.Rect(0, 0, 320, 480)
+	right := image.Rect(320, 0, 640, 480)
+
+	blue := color.RGBA{0, 0, 255, 255}
+	red := color.RGBA{255, 0, 0, 255}
+
+	draw.Draw(m, left, &image.Uniform{blue}, image.ZP, draw.Src)
+	draw.Draw(m, right, &image.Uniform{red}, image.ZP, draw.Src)
+
+	// Define a grid then extrapolate a new image.
+	grid := PixelGrid{3, 2}
+	p := grid.PalettedImage(m, 2000, 2000)
+
+	if want := 2000; p.Bounds().Dx() != want {
+		t.Errorf("Dx got %d, want %d", p.Bounds().Dx(), want)
+	}
+	if want := 1333; p.Bounds().Dy() != want {
+		t.Errorf("Dy got %d, want %d", p.Bounds().Dy(), want)
+	}
+	if want := 3; len(p.Palette) != want {
+		t.Errorf("len(p.Palette) got %d, want %d", len(p.Palette), want)
+	}
+
+}
+
 func Test_AverageColorOfRect_uniform(t *testing.T) {
 	c := color.RGBA{100, 120, 140, 255}
 	m := image.NewUniform(c)
