@@ -1,11 +1,14 @@
 package instagram
 
 import (
+	"bytes"
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"image"
+	"image/jpeg"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -94,6 +97,15 @@ func (r *Rep) Read(p []byte) (int, error) {
 		return r.body.Read(p)
 	}
 	return 0, fmt.Errorf("failed to fetch data, response was code %d", r.code)
+}
+
+// Image returns an image object from the JPG.
+func (r *Rep) Image() (image.Image, error) {
+	var buf bytes.Buffer
+	if _, err := buf.ReadFrom(r); err != nil {
+		return nil, err
+	}
+	return jpeg.Decode(&buf)
 }
 
 // Popular calls the Instagram Popular API and returns the data.

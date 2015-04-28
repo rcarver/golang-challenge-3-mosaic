@@ -1,7 +1,7 @@
 package main
 
 import (
-	"bytes"
+	"fmt"
 	"image"
 	"image/color"
 	"image/draw"
@@ -10,15 +10,6 @@ import (
 	"math"
 	"os"
 )
-
-type TileImage struct {
-	bytes.Buffer
-}
-
-type TargetImage struct {
-	bytes.Buffer
-	image.Image
-}
 
 // ImagePalette provides images indexed by their color.
 type ImagePalette interface {
@@ -32,15 +23,16 @@ type imagePalette struct {
 }
 
 // Add adds an image to the palette.
-func (p imagePalette) Add(m image.Image) {
+func (p *imagePalette) Add(m image.Image) {
 	c := AverageColorOfRect(m, m.Bounds(), 0)
 	p.palette = append(p.palette, c)
 	p.images = append(p.images, m)
 }
 
 // AtColor returns an image whose average color is closest to c.
-func (p imagePalette) AtColor(c color.Color) image.Image {
+func (p *imagePalette) AtColor(c color.Color) image.Image {
 	i := p.palette.Index(c)
+	fmt.Printf("Image %d of %d\n", i, len(p.images))
 	return p.images[i]
 }
 
