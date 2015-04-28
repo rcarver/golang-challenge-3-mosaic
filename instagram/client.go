@@ -69,6 +69,11 @@ func (m Media) StandardImage() *Rep {
 	return m.Images["standard_resolution"]
 }
 
+// ThumbnailImage returns the thumbnail resolution image representation.
+func (m Media) ThumbnailImage() *Rep {
+	return m.Images["thumbnail"]
+}
+
 // Rep is a JPG representation of an image or video, located at a URL and at a
 // specific width and height.
 type Rep struct {

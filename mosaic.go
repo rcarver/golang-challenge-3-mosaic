@@ -21,16 +21,25 @@ func main() {
 
 	src := images[0]
 	grid := PixelGrid{20, 20, 10}
-	m := grid.MosaicImage(src, 1000, 1000)
+	m := grid.MosaicImage(src, 3000, 3000)
 	m.Draw(palette)
 
+	//for i, x := range images {
+	//out, err := os.Create(fmt.Sprintf("./img-%d.png", i))
+	//err = png.Encode(out, x)
+	//if err != nil {
+	//fmt.Println(err)
+	//os.Exit(1)
+	//}
+	//}
+
 	out, err := os.Create("./source.png")
-	err = png.Encode(out, src)
+	err = png.Encode(out, images[0])
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	out, err = os.Create("./mosaic.png")
+	out, err = os.Create("./output.png")
 	err = png.Encode(out, m)
 	if err != nil {
 		fmt.Println(err)
@@ -65,12 +74,13 @@ func fetchImagesWithTag(api instagram.Client, tag string, count int) []image.Ima
 
 func fetchImages(images *[]image.Image, media []instagram.Media, max int) error {
 	for i, m := range media {
-		fmt.Printf("> %d Reading tile %s\n", i, m.StandardImage().URL)
-		img, err := m.StandardImage().Image()
+		res := m.ThumbnailImage()
+		fmt.Printf("> %d Reading tile %s\n", i, res.URL)
+		img, err := res.Image()
 		if err != nil {
 			return err
 		}
-		fmt.Printf("< %d Reading tile %s\n", i, m.StandardImage().URL)
+		fmt.Printf("< %d Reading tile %s\n", i, res.URL)
 		*images = append(*images, img)
 		if len(*images) > max {
 			return nil
