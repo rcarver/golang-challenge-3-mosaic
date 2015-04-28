@@ -20,35 +20,45 @@ type TargetImage struct {
 	image.Image
 }
 
-type colorGrid struct {
-	W      int
-	H      int
-	pixels []color.Color
+// ImagePalette provides images indexed by their color.
+type ImagePalette interface {
+	AtColor(c color.Color) image.Image
 }
 
-// ImagePalette provides images indexed by their color.
-type ImagePalette struct {
+// imagePalette provides images indexed by their color.
+type imagePalette struct {
 	images  []image.Image
 	palette color.Palette
 }
 
 // Add adds an image to the palette.
-func (p ImagePalette) Add(m image.Image) {
+func (p imagePalette) Add(m image.Image) {
 	c := AverageColorOfRect(m, m.Bounds(), 0)
 	p.palette = append(p.palette, c)
 	p.images = append(p.images, m)
 }
 
 // AtColor returns an image whose average color is closest to c.
-func (p ImagePalette) AtColor(c color.Color) image.Image {
+func (p imagePalette) AtColor(c color.Color) image.Image {
 	i := p.palette.Index(c)
 	return p.images[i]
 }
 
+// solidImagePalette implements ImagePalette by returning solid images.
+type solidImagePalette struct {
+	palette color.Palette
+}
+
+// AtColor returns an image with solid color closest to c.
+func (p solidImagePalette) AtColor(c color.Color) image.Image {
+	i := p.palette.Convert(c)
+	return image.NewUniform(i)
+}
+
 // MosaicImage is an image broken up into color blocks.
 type MosaicImage struct {
-	blocks []PixelBlock
 	draw.Image
+	blocks []PixelBlock
 }
 
 // Draw pulls images from the source and composites them into the mosaic grid.
@@ -113,7 +123,7 @@ func (g PixelGrid) MosaicImage(m image.Image, maxWidth, maxHeight int) *MosaicIm
 	bounds := image.Rect(0, 0, int(ratio*mw), int(ratio*mh))
 	blocks := g.Blocks(m)
 	mo := image.NewRGBA(bounds)
-	return &MosaicImage{blocks, mo}
+	return &MosaicImage{mo, blocks}
 }
 
 // AverageColorOfRect calcluates the average color of an area of an image. Step

@@ -4,19 +4,55 @@ import (
 	"fmt"
 	"image"
 	"image/color"
+	"image/color/palette"
 	"image/draw"
 	"image/png"
 	"os"
 	"testing"
 )
 
+var wroteImage bool
+
 func writeImage(m image.Image) {
+	if wroteImage {
+		fmt.Println("writeImage() already wrote an image this run")
+		os.Exit(1)
+	}
+	wroteImage = true
 	out, err := os.Create("./output.png")
 	err = png.Encode(out, m)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
+}
+
+func Test_MosaicImage_Draw(t *testing.T) {
+	mp := solidImagePalette{palette.WebSafe}
+	b := image.Rect(0, 0, 640, 480)
+	m := image.NewRGBA(b)
+	red := color.RGBA{255, 0, 0, 255}
+	green := color.RGBA{0, 255, 0, 255}
+	blue := color.RGBA{0, 0, 255, 255}
+	mi := MosaicImage{
+		m,
+		[]PixelBlock{
+			{image.Rect(0, 0, 320, 240), red},
+			{image.Rect(320, 0, 640, 240), green},
+			{image.Rect(0, 240, 640, 480), blue},
+		},
+	}
+	mi.Draw(mp)
+	if got, want := mi.At(0, 0), red; got != want {
+		t.Errorf("0,0 got %v, want %v", got, want)
+	}
+	if got, want := mi.At(320, 0), green; got != want {
+		t.Errorf("320,0 got %v, want %v", got, want)
+	}
+	if got, want := mi.At(0, 240), blue; got != want {
+		t.Errorf("240,0 got %v, want %v", got, want)
+	}
+	//writeImage(mi)
 }
 
 func Test_PixelGrid_Blocks(t *testing.T) {
@@ -65,7 +101,6 @@ func Test_PixelGrid_Blocks(t *testing.T) {
 		}
 		if got.Color != color {
 			t.Errorf("block %d, color got %v, want %v", i, got.Color, color)
-
 		}
 	}
 }
@@ -154,5 +189,5 @@ func Test_AverageColorOfRect_mixed_vertical(t *testing.T) {
 	if want := purple; a != want {
 		t.Errorf("AverageColorOfRect() got %v, want %v", a, want)
 	}
-	writeImage(m)
+	//writeImage(m)
 }
