@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"image"
 	"image/color"
+	"image/draw"
 	_ "image/jpeg"
 	"io"
 	"math"
@@ -25,71 +26,94 @@ type colorGrid struct {
 	pixels []color.Color
 }
 
+// ImagePalette provides images indexed by their color.
+type ImagePalette struct {
+	images  []image.Image
+	palette color.Palette
+}
+
+// Add adds an image to the palette.
+func (p ImagePalette) Add(m image.Image) {
+	c := AverageColorOfRect(m, m.Bounds(), 0)
+	p.palette = append(p.palette, c)
+	p.images = append(p.images, m)
+}
+
+// AtColor returns an image whose average color is closest to c.
+func (p ImagePalette) AtColor(c color.Color) image.Image {
+	i := p.palette.Index(c)
+	return p.images[i]
+}
+
+// MosaicImage is an image broken up into color blocks.
+type MosaicImage struct {
+	blocks []PixelBlock
+	draw.Image
+}
+
+// Draw pulls images from the source and composites them into the mosaic grid.
+func (m *MosaicImage) Draw(source ImagePalette) {
+	for _, b := range m.blocks {
+		rect := b.Rectangle
+		mi := source.AtColor(b.Color)
+		if mi != nil {
+			d := draw.FloydSteinberg
+			d.Draw(m.Image, rect, mi, rect.Min)
+		}
+	}
+}
+
+// PixelBlock is a Rectangle and a Color.
+type PixelBlock struct {
+	image.Rectangle
+	color.Color
+}
+
 // PixelGrid defines a W by H units grid. For example, PixelGrid{4, 3} is:
 //   ****
 //   ****
 //   ****
 type PixelGrid struct {
-	W int
-	H int
-}
-
-// PixelGridBlocks is a set of image.Rectangle representing the grid units of
-// an image.
-type PixelGridBlocks struct {
-	w     int
-	rects []image.Rectangle
-}
-
-// At returns the image.Rectangle of the block at X,Y.
-func (b PixelGridBlocks) At(x, y int) image.Rectangle {
-	return b.rects[(y*b.w)+x]
+	W    int
+	H    int
+	Step int
 }
 
 // Blocks calculates the bounds of each grid unit given the bounds of an image.
-func (g PixelGrid) Blocks(bounds image.Rectangle) PixelGridBlocks {
+func (g PixelGrid) Blocks(m image.Image) []PixelBlock {
 	// Calculate pixels size of each block.
+	bounds := m.Bounds()
 	size := bounds.Size()
 	px, py := (size.X / g.W), (size.Y / g.H)
 	// Allocate enough space to hold all blocks.
-	rects := make([]image.Rectangle, g.W*g.H)
+	blocks := make([]PixelBlock, g.W*g.H)
 	// Find the bounds of each block.
-	for i := range rects {
+	for i := range blocks {
 		x := i % g.W
 		y := i / g.W
-		rects[i] = image.Rectangle{
+		rect := image.Rectangle{
 			image.Point{x * px, y * py},
 			image.Point{(x + 1) * px, (y + 1) * py},
 		}
-		//fmt.Printf("Block %d (%d,%d) at %v\n", i, x, y, rects[i])
+		color := AverageColorOfRect(m, rect, g.Step)
+		blocks[i] = PixelBlock{rect, color}
+		//fmt.Printf("Block %d (%d,%d) at %v %v\n", i, x, y, rect, color)
 	}
-	return PixelGridBlocks{g.W, rects}
+	return blocks
 }
 
-// ColorPalette returns the color palette of m, as viewed by the pixel grid.
-func (g PixelGrid) ColorPalette(m image.Image) color.Palette {
-	blocks := g.Blocks(m.Bounds())
-	palette := make(color.Palette, 0, len(blocks.rects))
-	uniq := make(map[color.Color]struct{})
-	for _, r := range blocks.rects {
-		c := AverageColorOfRect(m, r, 10)
-		if _, ok := uniq[c]; !ok {
-			palette = append(palette, c)
-			uniq[c] = struct{}{}
-		}
-	}
-	return palette
-}
-
-// PalettedImage returns a paletted image calculated from the input image. The
+// MosaicImage calculates the foundation for a mosaic from the input image. The
 // resulting image's dimensions are maxWidth or maxHeight with the other
-// dimension sized proportionally.
-func (g PixelGrid) PalettedImage(m image.Image, maxWidth, maxHeight int) *image.Paletted {
+// dimension sized proportionally to the input image.
+func (g PixelGrid) MosaicImage(m image.Image, maxWidth, maxHeight int) *MosaicImage {
+	mb := m.Bounds()
 	gw, gh := float64(g.W), float64(g.H)
-	w, h := float64(maxWidth)/gw, float64(maxHeight)/gh
-	ratio := math.Min(w, h)
-	bounds := image.Rect(0, 0, int(math.Floor(ratio*gw)), int(math.Floor(ratio*gh)))
-	return image.NewPaletted(bounds, g.ColorPalette(m))
+	mw, mh := float64(mb.Dx())/gw, float64(mb.Dy())/gh
+	ratio := math.Min(float64(maxWidth)/mw, float64(maxHeight)/mh)
+	bounds := image.Rect(0, 0, int(ratio*mw), int(ratio*mh))
+	blocks := g.Blocks(m)
+	mo := image.NewRGBA(bounds)
+	return &MosaicImage{blocks, mo}
 }
 
 // AverageColorOfRect calcluates the average color of an area of an image. Step
@@ -108,7 +132,7 @@ func AverageColorOfRect(m image.Image, bounds image.Rectangle, step int) color.C
 			g += int(xg)
 			b += int(xb)
 			c++
-			//fmt.Printf("%d: %d %d %d\n", c, xr, xg, xb)
+			//fmt.Printf("%d,%d - %d %d %d\n", x, y, xr, xg, xb)
 		}
 	}
 	return color.RGBA{uint8(r / c), uint8(g / c), uint8(b / c), 255}
