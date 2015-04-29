@@ -107,7 +107,7 @@ func (r *Rep) Read(p []byte) (int, error) {
 // Image returns an image object from the JPG.
 func (r *Rep) Image() (image.Image, error) {
 	var buf bytes.Buffer
-	if _, err := buf.ReadFrom(r); err != nil {
+	if c, err := buf.ReadFrom(r); err != nil || c == 0 {
 		return nil, err
 	}
 	return jpeg.Decode(&buf)

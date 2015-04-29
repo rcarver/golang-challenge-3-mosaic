@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"image"
 	"image/color"
 	"image/draw"
@@ -24,7 +23,7 @@ type imagePalette struct {
 
 // Add adds an image to the palette.
 func (p *imagePalette) Add(m image.Image) {
-	c := AverageColorOfRect(m, m.Bounds(), 0)
+	c := AverageColorOfRect(m, m.Bounds(), 10)
 	p.palette = append(p.palette, c)
 	p.images = append(p.images, m)
 }
@@ -32,7 +31,7 @@ func (p *imagePalette) Add(m image.Image) {
 // AtColor returns an image whose average color is closest to c.
 func (p *imagePalette) AtColor(c color.Color) image.Image {
 	i := p.palette.Index(c)
-	fmt.Printf("Image %d of %d\n", i, len(p.images))
+	//fmt.Printf("AtColor %v %d\n", c, i)
 	return p.images[i]
 }
 
@@ -60,7 +59,8 @@ func (m *MosaicImage) Draw(source ImagePalette) {
 		mi := source.AtColor(b.Color)
 		if mi != nil {
 			d := draw.FloydSteinberg
-			d.Draw(m.Image, rect, mi, rect.Min)
+			//fmt.Printf("comp %d %v\n", i, rect)
+			d.Draw(m.Image, rect, mi, image.ZP)
 		}
 	}
 }
@@ -113,9 +113,14 @@ func (g PixelGrid) MosaicImage(m image.Image, maxWidth, maxHeight int) *MosaicIm
 	mw, mh := float64(mb.Dx())/gw, float64(mb.Dy())/gh
 	ratio := math.Min(float64(maxWidth)/mw, float64(maxHeight)/mh)
 	bounds := image.Rect(0, 0, int(ratio*mw), int(ratio*mh))
-	blocks := g.Blocks(m)
 	mo := image.NewRGBA(bounds)
-	return &MosaicImage{mo, blocks}
+	inBlocks := g.Blocks(m)
+	outBlocks := g.Blocks(mo)
+	mergeBlocks := make([]PixelBlock, len(inBlocks))
+	for i := range inBlocks {
+		mergeBlocks[i] = PixelBlock{outBlocks[i].Rectangle, inBlocks[i].Color}
+	}
+	return &MosaicImage{mo, mergeBlocks}
 }
 
 // AverageColorOfRect calcluates the average color of an area of an image. Step
