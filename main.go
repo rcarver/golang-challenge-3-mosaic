@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"image/color/palette"
 	"image/png"
 	"os"
 
@@ -9,23 +10,31 @@ import (
 )
 
 var tag = "balloon"
-var fetch = 100
-var palette = 100
+var inventorySize = 100
+var paletteSize = 100
+var solidPalette = true
 
 func main() {
-	cache := FileImageCache{"./cache"}
-	inventory := NewImageInventory(cache)
+	var p ImagePalette
 
-	api := instagram.NewClient()
-	if err := inventory.Fetch(api, tag, fetch); err != nil {
-		fmt.Printf("Fetch() %s\n", err)
-		os.Exit(1)
-	}
+	if solidPalette {
+		p = solidImagePalette{palette.WebSafe}
+	} else {
+		cache := FileImageCache{"./cache"}
+		inventory := NewImageInventory(cache)
 
-	palette, err := inventory.ImagePalette(palette)
-	if err != nil {
-		fmt.Printf("ImagePalette() %s\n", err)
-		os.Exit(1)
+		api := instagram.NewClient()
+		if err := inventory.Fetch(api, tag, inventorySize); err != nil {
+			fmt.Printf("Fetch() %s\n", err)
+			os.Exit(1)
+		}
+
+		ip, err := inventory.ImagePalette(paletteSize)
+		if err != nil {
+			fmt.Printf("ImagePalette() %s\n", err)
+			os.Exit(1)
+		}
+		p = ip
 	}
 
 	fi, err := os.Open("./fixtures/balloon.jpg")
@@ -42,7 +51,7 @@ func main() {
 
 	grid := PixelGrid{20, 20, 10}
 	m := grid.MosaicImage(src, 3000, 3000)
-	m.Draw(palette)
+	m.Draw(p)
 
 	out, err := os.Create("./output.png")
 	if err != nil {
