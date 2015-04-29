@@ -1,11 +1,13 @@
 package main
 
 import (
+	"fmt"
 	"image"
 	"image/color"
 	"image/draw"
 	_ "image/jpeg"
 	"io"
+	"math"
 	"os"
 )
 
@@ -30,8 +32,9 @@ func (p *imagePalette) Add(m image.Image) {
 // AtColor returns an image whose average color is closest to c.
 func (p *imagePalette) AtColor(c color.Color) image.Image {
 	i := p.palette.Index(c)
-	//fmt.Printf("AtColor %v %d\n", c, i)
-	return p.images[i]
+	m := p.images[i]
+	//fmt.Printf("AtColor %v %v\n", c, AverageColorOfRect(m, m.Bounds(), 10))
+	return m
 }
 
 // solidImagePalette implements ImagePalette by returning solid images.
@@ -42,6 +45,7 @@ type solidImagePalette struct {
 // AtColor returns an image with solid color closest to c.
 func (p solidImagePalette) AtColor(c color.Color) image.Image {
 	i := p.palette.Convert(c)
+	//fmt.Printf("AtColor %v %v\n", c, i)
 	return image.NewUniform(i)
 }
 
@@ -58,7 +62,7 @@ func (m *MosaicImage) Draw(source ImagePalette) {
 		mi := source.AtColor(b.Color)
 		if mi != nil {
 			d := draw.FloydSteinberg
-			//fmt.Printf("comp %d %v\n", i, rect)
+			fmt.Printf("comp %v %v\n", rect, b.Color)
 			d.Draw(m.Image, rect, mi, image.ZP)
 		}
 	}
@@ -75,9 +79,9 @@ type PixelBlock struct {
 //   ****
 //   ****
 type PixelGrid struct {
-	W    int
-	H    int
-	Step int
+	W      int
+	H      int
+	Sample float64
 }
 
 // Blocks calculates the bounds of each grid unit given the bounds of an image.
@@ -96,7 +100,7 @@ func (g PixelGrid) Blocks(m image.Image) []PixelBlock {
 			image.Point{x * px, y * py},
 			image.Point{(x + 1) * px, (y + 1) * py},
 		}
-		color := AverageColorOfRect(m, rect, g.Step)
+		color := AverageColorOfRect(m, rect, g.Sample)
 		blocks[i] = PixelBlock{rect, color}
 		//fmt.Printf("Block %d (%d,%d) at %v %v\n", i, x, y, rect, color)
 	}
@@ -130,23 +134,26 @@ func (g PixelGrid) MosaicImage(m image.Image, maxWidth, maxHeight int) *MosaicIm
 // AverageColorOfRect calcluates the average color of an area of an image. Step
 // determines how many pixels to sample, 1 being every pixel, 10 being every
 // 10th pixel.
-func AverageColorOfRect(m image.Image, bounds image.Rectangle, step int) color.Color {
-	if step <= 0 {
-		step = 1
-	}
-	r, g, b := 0, 0, 0
-	c := 0
-	for y := bounds.Min.Y; y < bounds.Max.Y; y += step {
-		for x := bounds.Min.X; x < bounds.Max.X; x += step {
+func AverageColorOfRect(m image.Image, bounds image.Rectangle, sample float64) color.Color {
+	r, g, b := uint64(0), uint64(0), uint64(0)
+	c := uint64(0)
+	sample = 1 - sample
+	xStep := int(math.Max(float64(bounds.Dx())*sample, 1))
+	yStep := int(math.Max(float64(bounds.Dy())*sample, 1))
+	//fmt.Printf("> Avg %v step:%d x:%d y:%d\n", bounds, sample, xStep, yStep)
+	for y := bounds.Min.Y; y <= bounds.Max.Y; y += yStep {
+		for x := bounds.Min.X; x <= bounds.Max.X; x += xStep {
 			xr, xg, xb, _ := m.At(x, y).RGBA()
-			r += int(xr)
-			g += int(xg)
-			b += int(xb)
+			r += uint64(xr)
+			g += uint64(xg)
+			b += uint64(xb)
 			c++
-			//fmt.Printf("%d,%d - %d %d %d\n", x, y, xr, xg, xb)
+			//fmt.Printf("  %d,%d - %d %d %d\n", x, y, xr, xg, xb)
 		}
 	}
-	return color.RGBA{uint8(r / c), uint8(g / c), uint8(b / c), 255}
+	color := color.RGBA64{uint16(r / c), uint16(g / c), uint16(b / c), 65535}
+	//fmt.Printf("< Avg %v %d %d %d, c:%d, %v\n", bounds, r, g, b, c, color)
+	return color
 }
 
 func imageFromFile(path string) (image.Image, error) {

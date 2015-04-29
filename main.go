@@ -10,9 +10,9 @@ import (
 )
 
 var tag = "balloon"
-var inventorySize = 100
-var paletteSize = 100
-var solidPalette = true
+var inventorySize = 200
+var paletteSize = 200
+var solidPalette = false
 
 func main() {
 	var p ImagePalette
@@ -49,8 +49,10 @@ func main() {
 		os.Exit(1)
 	}
 
-	grid := PixelGrid{20, 20, 10}
-	m := grid.MosaicImage(src, 3000, 3000)
+	units := 40
+	thumbSize := 150
+	grid := PixelGrid{units, units, .5}
+	m := grid.MosaicImage(src, thumbSize*units, thumbSize*units)
 	m.Draw(p)
 
 	out, err := os.Create("./output.png")
