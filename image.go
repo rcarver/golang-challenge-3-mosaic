@@ -6,7 +6,6 @@ import (
 	"image/draw"
 	_ "image/jpeg"
 	"io"
-	"math"
 	"os"
 )
 
@@ -109,16 +108,21 @@ func (g PixelGrid) Blocks(m image.Image) []PixelBlock {
 // dimension sized proportionally to the input image.
 func (g PixelGrid) MosaicImage(m image.Image, maxWidth, maxHeight int) *MosaicImage {
 	mb := m.Bounds()
-	gw, gh := float64(g.W), float64(g.H)
-	mw, mh := float64(mb.Dx())/gw, float64(mb.Dy())/gh
-	ratio := math.Min(float64(maxWidth)/mw, float64(maxHeight)/mh)
-	bounds := image.Rect(0, 0, int(ratio*mw), int(ratio*mh))
+	mw, mh := float64(mb.Dx()), float64(mb.Dy())
+	var bounds image.Rectangle
+	if mh < mw {
+		ratio := mh / mw
+		bounds = image.Rect(0, 0, maxWidth, int(float64(maxHeight)*ratio))
+	} else {
+		ratio := mw / mh
+		bounds = image.Rect(0, 0, int(float64(maxWidth)*ratio), maxHeight)
+	}
 	mo := image.NewRGBA(bounds)
-	inBlocks := g.Blocks(m)
-	outBlocks := g.Blocks(mo)
-	mergeBlocks := make([]PixelBlock, len(inBlocks))
-	for i := range inBlocks {
-		mergeBlocks[i] = PixelBlock{outBlocks[i].Rectangle, inBlocks[i].Color}
+	colors := g.Blocks(m)
+	rects := g.Blocks(mo)
+	mergeBlocks := make([]PixelBlock, len(colors))
+	for i := range colors {
+		mergeBlocks[i] = PixelBlock{rects[i].Rectangle, colors[i].Color}
 	}
 	return &MosaicImage{mo, mergeBlocks}
 }

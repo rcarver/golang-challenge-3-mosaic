@@ -123,10 +123,10 @@ func Test_PixelGrid_MosaicImage(t *testing.T) {
 	mo := grid.MosaicImage(m, 2000, 2000)
 
 	// Check output pixels.
-	if want := 1777; mo.Bounds().Dx() != want {
+	if want := 2000; mo.Bounds().Dx() != want {
 		t.Errorf("Dx got %d, want %d", mo.Bounds().Dx(), want)
 	}
-	if want := 2000; mo.Bounds().Dy() != want {
+	if want := 1500; mo.Bounds().Dy() != want {
 		t.Errorf("Dy got %d, want %d", mo.Bounds().Dy(), want)
 	}
 	// Check color palette.
