@@ -13,33 +13,76 @@ import (
 
 // ImagePalette provides images indexed by their color.
 type ImagePalette interface {
+	Add(m image.Image)
+	IsFull() bool
 	AtColor(c color.Color) image.Image
+}
+
+// NewImagePalette initializes a new color palette backed by images. The
+// palette needs to be populated with images before it's useful.
+func NewImagePalette(p color.Palette) ImagePalette {
+	return &imagePalette{
+		palette: p,
+		images:  make(map[int][]image.Image),
+		indices: make(map[int]int),
+	}
+}
+
+// NewSolidImagePalette initializes a new color palette backed by solid images.
+// The palette does not need to be popluated before it's useful.
+func NewSolidImagePalette(p color.Palette) ImagePalette {
+	return &solidImagePalette{palette: p}
 }
 
 // imagePalette provides images indexed by their color.
 type imagePalette struct {
-	images  []image.Image
 	palette color.Palette
+	images  map[int][]image.Image
+	indices map[int]int
 }
 
 // Add adds an image to the palette.
 func (p *imagePalette) Add(m image.Image) {
-	c := AverageColorOfRect(m, m.Bounds(), 10)
-	p.palette = append(p.palette, c)
-	p.images = append(p.images, m)
+	c := AverageColorOfRect(m, m.Bounds(), 1)
+	i := p.palette.Index(c)
+	p.images[i] = append(p.images[i], m)
+	fmt.Printf("Add(%v) %d\n", c, len(p.images[i]))
+}
+
+func (p imagePalette) IsFull() bool {
+	return len(p.images) >= len(p.palette)
 }
 
 // AtColor returns an image whose average color is closest to c.
 func (p *imagePalette) AtColor(c color.Color) image.Image {
 	i := p.palette.Index(c)
-	m := p.images[i]
-	//fmt.Printf("AtColor %v %v\n", c, AverageColorOfRect(m, m.Bounds(), 10))
-	return m
+	x := p.palette.Convert(c)
+	a, ok := p.images[i]
+	if ok {
+		idx := p.indices[i]
+		p.indices[i]++
+		if p.indices[i] > len(p.images[i]) {
+			p.indices[i] = 0
+			idx = 0
+		}
+		fmt.Printf("AtColor() Got image for %v, choosing idx %d of %d\n", x, idx, len(p.images[i]))
+		return a[idx]
+	}
+	fmt.Printf("AtColor() Missing image for %v\n", x)
+	return nil
 }
 
 // solidImagePalette implements ImagePalette by returning solid images.
 type solidImagePalette struct {
 	palette color.Palette
+}
+
+func (p solidImagePalette) Add(m image.Image) {
+	// no op
+}
+
+func (p solidImagePalette) IsFull() bool {
+	return true
 }
 
 // AtColor returns an image with solid color closest to c.
@@ -62,7 +105,7 @@ func (m *MosaicImage) Draw(source ImagePalette) {
 		mi := source.AtColor(b.Color)
 		if mi != nil {
 			d := draw.FloydSteinberg
-			fmt.Printf("comp %v %v\n", rect, b.Color)
+			//fmt.Printf("comp %v %v\n", rect, b.Color)
 			d.Draw(m.Image, rect, mi, image.ZP)
 		}
 	}
@@ -135,6 +178,9 @@ func (g PixelGrid) MosaicImage(m image.Image, maxWidth, maxHeight int) *MosaicIm
 // determines how many pixels to sample, 1 being every pixel, 10 being every
 // 10th pixel.
 func AverageColorOfRect(m image.Image, bounds image.Rectangle, sample float64) color.Color {
+	if sample < 1 || sample > 1 {
+		sample = 1
+	}
 	r, g, b := uint64(0), uint64(0), uint64(0)
 	c := uint64(0)
 	sample = 1 - sample

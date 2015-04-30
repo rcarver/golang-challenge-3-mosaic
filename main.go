@@ -9,16 +9,16 @@ import (
 	"github.com/rcarver/golang-challenge-3-mosaic/instagram"
 )
 
-var tag = "balloon"
-var inventorySize = 200
-var paletteSize = 200
+var tag = "cat"
+var inventorySize = 1600
+var colorPalette = palette.WebSafe
 var solidPalette = false
 
 func main() {
 	var p ImagePalette
 
 	if solidPalette {
-		p = solidImagePalette{palette.WebSafe}
+		p = NewSolidImagePalette(colorPalette)
 	} else {
 		cache := FileImageCache{"./cache"}
 		inventory := NewImageInventory(cache)
@@ -29,12 +29,12 @@ func main() {
 			os.Exit(1)
 		}
 
-		ip, err := inventory.ImagePalette(paletteSize)
+		p = NewImagePalette(colorPalette)
+		err := inventory.PopulatePalette(p)
 		if err != nil {
 			fmt.Printf("ImagePalette() %s\n", err)
 			os.Exit(1)
 		}
-		p = ip
 	}
 
 	fi, err := os.Open("./fixtures/balloon.jpg")
@@ -49,7 +49,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	units := 40
+	units := 20
 	thumbSize := 150
 	grid := PixelGrid{units, units, .5}
 	m := grid.MosaicImage(src, thumbSize*units, thumbSize*units)

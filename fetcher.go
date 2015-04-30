@@ -65,19 +65,18 @@ type ImageInventory struct {
 	keys []string
 }
 
-func (i ImageInventory) ImagePalette(max int) (ImagePalette, error) {
-	palette := &imagePalette{}
-	for j, key := range i.keys {
+func (i ImageInventory) PopulatePalette(palette ImagePalette) error {
+	for _, key := range i.keys {
 		m, err := i.Get(key)
 		if err != nil {
-			return palette, err
-		}
-		if j > max {
-			break
+			return err
 		}
 		palette.Add(m)
+		if palette.IsFull() {
+			break
+		}
 	}
-	return palette, nil
+	return nil
 }
 
 func (ii *ImageInventory) Fetch(api instagram.Client, tag string, max int) error {
