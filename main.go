@@ -10,8 +10,8 @@ import (
 	"github.com/rcarver/golang-challenge-3-mosaic/mosaic"
 )
 
-var tag = "cat"
-var inventorySize = 400
+var tag = "balloon"
+var inventorySize = 1600
 var solidPalette = false
 
 func main() {
