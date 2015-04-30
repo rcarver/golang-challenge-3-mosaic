@@ -53,7 +53,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	m := mosaic.New(src, units, units, p)
+	m := mosaic.Compose(src, units, units, p)
 
 	out, err := os.Create("./output.png")
 	if err != nil {

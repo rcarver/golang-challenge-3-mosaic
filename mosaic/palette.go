@@ -1,12 +1,13 @@
 package mosaic
 
 import (
-	"fmt"
 	"image"
 	"image/color"
-	"math"
 )
 
+// ImagePalette is a color.Paletted that is backed by images. Each entry in the
+// color palette may have multiple images associated, in which case the image
+// used is rotated through available options.
 type ImagePalette struct {
 	color.Palette
 	ImgX, ImgY    int
@@ -15,6 +16,9 @@ type ImagePalette struct {
 	indices       map[int]int
 }
 
+// NewImagePalette initializes an ImagePalette of a number of colors, and
+// images of a certain size. This palette must be populated with images to be
+// useful.
 func NewImagePalette(colors, width, height int) *ImagePalette {
 	return &ImagePalette{
 		Palette:       make(color.Palette, 0, colors),
@@ -26,6 +30,9 @@ func NewImagePalette(colors, width, height int) *ImagePalette {
 	}
 }
 
+// NewSolidPalette initializes an ImagePalette with a given color palette and
+// images of a certain size. This palette does not need to be populated with
+// images - instead, solid images will be returned for any color index.
 func NewSolidPalette(palette color.Palette, width, height int) *ImagePalette {
 	return &ImagePalette{
 		Palette:       palette,
@@ -35,9 +42,11 @@ func NewSolidPalette(palette color.Palette, width, height int) *ImagePalette {
 	}
 }
 
-// Add adds an image to the palette.
+// Add builds the color palette by assigning a new color from the given image.
+// If the palette is full, or the palette already contains the color of the
+// image then the image is added as an option to the nearest color.
 func (p *ImagePalette) Add(m image.Image) {
-	c := AverageColorOfRect(m, m.Bounds(), 1)
+	c := average(m, m.Bounds(), 1)
 	// If we don't have a full color palette, use every image as a new
 	// entry (unless it's a dup).
 	if len(p.Palette) < cap(p.Palette) {
@@ -67,7 +76,7 @@ func (p *ImagePalette) Size() int {
 	return len(p.Palette)
 }
 
-// AtColor returns an image whose average color is closest to c.
+// AtColor returns an image whose average color is closest to c in the palette.
 func (p *ImagePalette) AtColor(c color.Color) image.Image {
 	i := p.Index(c)
 	x := p.Convert(c)
@@ -79,40 +88,12 @@ func (p *ImagePalette) AtColor(c color.Color) image.Image {
 			p.indices[i] = 0
 			idx = 0
 		}
-		fmt.Printf("AtColor() Got image for %v, choosing idx %d of %d\n", x, idx, len(p.images[i]))
+		//fmt.Printf("AtColor() Got image for %v, choosing idx %d of %d\n", x, idx, len(p.images[i]))
 		return a[idx]
 	}
 	if p.solidFallback {
 		return image.NewUniform(x)
 	}
-	fmt.Printf("AtColor() Missing image for %v\n", x)
+	//fmt.Printf("AtColor() Missing image for %v\n", x)
 	return nil
-}
-
-// AverageColorOfRect calcluates the average color of an area of an image. Step
-// determines how many pixels to sample, 1 being every pixel, 10 being every
-// 10th pixel.
-func AverageColorOfRect(m image.Image, bounds image.Rectangle, sample float64) color.Color {
-	if sample < 1 || sample > 1 {
-		sample = 1
-	}
-	r, g, b := uint64(0), uint64(0), uint64(0)
-	c := uint64(0)
-	sample = 1 - sample
-	xStep := int(math.Max(float64(bounds.Dx())*sample, 1))
-	yStep := int(math.Max(float64(bounds.Dy())*sample, 1))
-	//fmt.Printf("> Avg %v step:%d x:%d y:%d\n", bounds, sample, xStep, yStep)
-	for y := bounds.Min.Y; y <= bounds.Max.Y; y += yStep {
-		for x := bounds.Min.X; x <= bounds.Max.X; x += xStep {
-			xr, xg, xb, _ := m.At(x, y).RGBA()
-			r += uint64(xr)
-			g += uint64(xg)
-			b += uint64(xb)
-			c++
-			//fmt.Printf("  %d,%d - %d %d %d\n", x, y, xr, xg, xb)
-		}
-	}
-	color := color.RGBA64{uint16(r / c), uint16(g / c), uint16(b / c), 65535}
-	//fmt.Printf("< Avg %v %d %d %d, c:%d, %v\n", bounds, r, g, b, c, color)
-	return color
 }
