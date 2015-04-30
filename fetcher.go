@@ -9,6 +9,7 @@ import (
 	"os"
 
 	"github.com/rcarver/golang-challenge-3-mosaic/instagram"
+	"github.com/rcarver/golang-challenge-3-mosaic/mosaic"
 )
 
 type ImageCache interface {
@@ -65,16 +66,13 @@ type ImageInventory struct {
 	keys []string
 }
 
-func (i ImageInventory) PopulatePalette(palette ImagePalette) error {
+func (i ImageInventory) PopulatePalette(palette *mosaic.ImagePalette) error {
 	for _, key := range i.keys {
 		m, err := i.Get(key)
 		if err != nil {
 			return err
 		}
 		palette.Add(m)
-		if palette.IsFull() {
-			break
-		}
 	}
 	return nil
 }
@@ -113,7 +111,7 @@ func (ii *ImageInventory) cacheImage(media instagram.Media) error {
 	}
 	img, err := res.Image()
 	if err != nil {
-		return err
+		return nil
 	}
 	fmt.Printf("Get %s\n", res.URL)
 	ii.keys = append(ii.keys, res.URL)
