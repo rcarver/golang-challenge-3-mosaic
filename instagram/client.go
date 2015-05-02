@@ -28,8 +28,8 @@ type Client struct {
 }
 
 // NewClient creates an initialized Client.
-func NewClient() Client {
-	return Client{
+func NewClient() *Client {
+	return &Client{
 		BaseURL:   INSTAGRAM_URL,
 		UrlSigner: clientSecretSigner{INSTAGRAM_CLIENT_ID, INSTAGRAM_SECRET},
 	}

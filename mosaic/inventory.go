@@ -1,4 +1,4 @@
-package main
+package mosaic
 
 import (
 	"crypto/sha1"
@@ -9,7 +9,6 @@ import (
 	"os"
 
 	"github.com/rcarver/golang-challenge-3-mosaic/instagram"
-	"github.com/rcarver/golang-challenge-3-mosaic/mosaic"
 )
 
 type ImageCache interface {
@@ -57,43 +56,48 @@ func (c FileImageCache) path(key string) string {
 	return fmt.Sprintf("%s/%s.jpg", c.Dir, h)
 }
 
-func NewImageInventory(cache ImageCache) *ImageInventory {
-	return &ImageInventory{ImageCache: cache}
-}
-
 type ImageInventory struct {
 	ImageCache
-	keys []string
+	Tags map[string][]string
 }
 
-func (i ImageInventory) PopulatePalette(palette *mosaic.ImagePalette) error {
-	for _, key := range i.keys {
+func NewImageInventory(cache ImageCache) *ImageInventory {
+	return &ImageInventory{
+		ImageCache: cache,
+		Tags:       make(map[string][]string),
+	}
+}
+
+func (i ImageInventory) PopulatePalette(tag string, palette *ImagePalette) error {
+	keys := i.Tags[tag]
+	for _, key := range keys {
 		m, err := i.Get(key)
 		if err != nil {
-			return err
+			fmt.Println("Error reading from cache %s", err)
+			continue
 		}
 		palette.Add(m)
 	}
 	return nil
 }
 
-func (ii *ImageInventory) Fetch(api instagram.Client, tag string, max int) error {
+func (ii *ImageInventory) Fetch(api *instagram.Client, tag string, max int) error {
 	res, err := api.Tagged(tag, "")
 	if err != nil {
 		return err
 	}
-
 	for {
 		for _, m := range res.Media {
-			if len(ii.keys) >= max {
+			if len(ii.Tags[tag]) >= max {
 				return nil
 			}
-			err := ii.cacheImage(m)
+			key, err := ii.cacheImage(m)
 			if err != nil {
 				return err
 			}
+			ii.Tags[tag] = append(ii.Tags[tag], key)
 		}
-		fmt.Printf("got %d tiles\n", len(ii.keys))
+		fmt.Printf("got %d tiles\n", len(ii.Tags[tag]))
 		res, err = api.Tagged(tag, res.MaxTagID)
 		if err != nil {
 			return err
@@ -102,21 +106,19 @@ func (ii *ImageInventory) Fetch(api instagram.Client, tag string, max int) error
 	return nil
 }
 
-func (ii *ImageInventory) cacheImage(media instagram.Media) error {
+func (ii *ImageInventory) cacheImage(media instagram.Media) (string, error) {
 	res := media.ThumbnailImage()
 	if ii.Has(res.URL) {
-		fmt.Printf("Has %s\n", res.URL)
-		ii.keys = append(ii.keys, res.URL)
-		return nil
+		//fmt.Printf("Has %s\n", res.URL)
+		return res.URL, nil
 	}
 	img, err := res.Image()
 	if err != nil {
-		return nil
+		return "", nil
 	}
-	fmt.Printf("Get %s\n", res.URL)
-	ii.keys = append(ii.keys, res.URL)
+	//fmt.Printf("Get %s\n", res.URL)
 	if err := ii.Put(res.URL, img); err != nil {
-		return err
+		return "", err
 	}
-	return nil
+	return res.URL, nil
 }

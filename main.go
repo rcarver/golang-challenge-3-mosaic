@@ -11,7 +11,7 @@ import (
 )
 
 var tag = "balloon"
-var inventorySize = 1600
+var inventorySize = 400
 var solidPalette = false
 
 func main() {
@@ -22,19 +22,19 @@ func main() {
 	if solidPalette {
 		p = mosaic.NewSolidPalette(palette.WebSafe, thumbSize, thumbSize)
 	} else {
-		cache := FileImageCache{"./cache"}
-		inventory := NewImageInventory(cache)
+		cache := mosaic.FileImageCache{"./cache"}
+		inv := mosaic.NewImageInventory(cache)
 
 		api := instagram.NewClient()
-		if err := inventory.Fetch(api, tag, inventorySize); err != nil {
+		if err := inv.Fetch(api, tag, inventorySize); err != nil {
 			fmt.Printf("Fetch() %s\n", err)
 			os.Exit(1)
 		}
 
 		p = mosaic.NewImagePalette(256, thumbSize, thumbSize)
-		err := inventory.PopulatePalette(p)
+		err := inv.PopulatePalette(tag, p)
 		if err != nil {
-			fmt.Printf("ImagePalette() %s\n", err)
+			fmt.Printf("PopulatePalette() %s\n", err)
 			os.Exit(1)
 		}
 	}
