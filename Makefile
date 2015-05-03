@@ -6,7 +6,7 @@ run:
 
 serve:
 	go build .
-	go run service/main.go
+	go run service/*.go
 
 test:
 	go test

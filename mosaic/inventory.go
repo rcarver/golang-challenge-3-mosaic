@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"image"
 	"image/jpeg"
+	"log"
 	"os"
 
 	"github.com/rcarver/golang-challenge-3-mosaic/instagram"
@@ -73,12 +74,16 @@ func (i ImageInventory) PopulatePalette(tag string, palette *ImagePalette) error
 	for _, key := range keys {
 		m, err := i.Get(key)
 		if err != nil {
-			fmt.Println("Error reading from cache %s", err)
+			log.Printf("Error reading from cache: %s, key:%#v\n", err, key)
 			continue
 		}
 		palette.Add(m)
 	}
 	return nil
+}
+
+func (i ImageInventory) Size(tag string) int {
+	return len(i.Tags[tag])
 }
 
 func (ii *ImageInventory) Fetch(api *instagram.Client, tag string, max int) error {
@@ -97,7 +102,7 @@ func (ii *ImageInventory) Fetch(api *instagram.Client, tag string, max int) erro
 			}
 			ii.Tags[tag] = append(ii.Tags[tag], key)
 		}
-		fmt.Printf("got %d tiles\n", len(ii.Tags[tag]))
+		log.Printf("Fetch(%s) got %d of %d\n", tag, len(ii.Tags[tag]), max)
 		res, err = api.Tagged(tag, res.MaxTagID)
 		if err != nil {
 			return err
@@ -109,14 +114,14 @@ func (ii *ImageInventory) Fetch(api *instagram.Client, tag string, max int) erro
 func (ii *ImageInventory) cacheImage(media instagram.Media) (string, error) {
 	res := media.ThumbnailImage()
 	if ii.Has(res.URL) {
-		//fmt.Printf("Has %s\n", res.URL)
+		//log.Printf("Has %s\n", res.URL)
 		return res.URL, nil
 	}
 	img, err := res.Image()
 	if err != nil {
 		return "", nil
 	}
-	//fmt.Printf("Get %s\n", res.URL)
+	//log.Printf("Get %s\n", res.URL)
 	if err := ii.Put(res.URL, img); err != nil {
 		return "", err
 	}

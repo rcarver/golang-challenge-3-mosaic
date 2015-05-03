@@ -161,7 +161,6 @@ func (c Client) MediaList(url string) (*MediaList, error) {
 // getJSON calls a URL and marshals the resulting JSON into the data struct. If
 // the response is anything but 200 an error is returned.
 func (c Client) getJSON(url string, data interface{}) error {
-	println(url)
 	res, err := http.Get(url)
 	if err != nil {
 		return err

@@ -76,6 +76,15 @@ func (p *ImagePalette) Size() int {
 	return len(p.Palette)
 }
 
+// NumImages returns the number of images in the palette.
+func (p *ImagePalette) NumImages() int {
+	var c = 0
+	for _, images := range p.images {
+		c += len(images)
+	}
+	return c
+}
+
 // AtColor returns an image whose average color is closest to c in the palette.
 func (p *ImagePalette) AtColor(c color.Color) image.Image {
 	i := p.Index(c)
