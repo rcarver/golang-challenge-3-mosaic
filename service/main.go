@@ -1,4 +1,4 @@
-package main
+package service
 
 import (
 	"encoding/json"
@@ -41,7 +41,7 @@ var thumbs *thumbInventory
 // mosaics is the database of mosaics generated.
 var mosaics *mosaicInventory
 
-func main() {
+func Serve() {
 	thumbsCache := mosaic.FileImageCache{"./cache/thumbs"}
 	mosaicsCache := mosaic.FileImageCache{"./cache/mosaics"}
 

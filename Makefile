@@ -1,12 +1,10 @@
 run:
 	rm -f output.png
-	go build .
-	./golang-challenge-3-mosaic
+	go run cli/main.go
 	test -f output.png && open output.png
 
 serve:
-	go build .
-	go run service/*.go
+	go run cli/main.go -serve
 
 test:
 	go test

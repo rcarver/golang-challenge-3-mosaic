@@ -1,4 +1,4 @@
-package main
+package service
 
 import (
 	"fmt"
@@ -76,11 +76,13 @@ func (i *mosaicInventory) List() []*mosaicData {
 	return i.mosaics
 }
 
+// thumbInventory tracks the thumbnails that have been acquired.
 type thumbInventory struct {
 	*mosaic.ImageInventory
-	api  *instagram.Client
-	tags map[string]chan bool
+	api *instagram.Client
+
 	mu   sync.Mutex
+	tags map[string]chan bool
 }
 
 func (i *thumbInventory) AddTag(tag string) chan bool {
