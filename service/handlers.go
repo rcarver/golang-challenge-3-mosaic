@@ -159,7 +159,6 @@ func handleCreateMosaic(w http.ResponseWriter, r *http.Request) {
 			log.Printf("Failed to store mosaic image: %s", err)
 			return
 		}
-
 	}()
 
 	// Respond immediately with the ID.
