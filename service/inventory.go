@@ -11,44 +11,44 @@ import (
 )
 
 const (
+	MosaicStatusNew     = "new"
 	MosaicStatusWorking = "working"
 	MosaicStatusFailed  = "failed"
 	MosaicStatusCreated = "created"
 )
 
 var (
-	mosaicID     = 0
-	imagesPerTag = 400
+	mosaicIDCounter = 0
+	imagesPerTag    = 400
 )
 
 // Inventory of mosaics that have been created.
 type mosaicInventory struct {
 	mosaic.ImageCache
-	mosaics []*mosaicData
+	mosaics []*mosaicRecord
 }
 
-type mosaicData struct {
-	ID     string
+type mosaicID string
+
+type mosaicRecord struct {
+	ID     mosaicID
 	Tag    string
 	Status string
 }
 
-func (i *mosaicInventory) NextID() string {
-	mosaicID++
-	return fmt.Sprintf("%d", mosaicID)
-}
-
-func (i *mosaicInventory) Create(id string, tag string) error {
-	d := &mosaicData{
+func (i *mosaicInventory) Create(tag string) (*mosaicRecord, error) {
+	mosaicIDCounter++
+	id := mosaicID(fmt.Sprintf("%d", mosaicIDCounter))
+	d := &mosaicRecord{
 		ID:     id,
 		Tag:    tag,
-		Status: MosaicStatusWorking,
+		Status: MosaicStatusNew,
 	}
 	i.mosaics = append(i.mosaics, d)
-	return nil
+	return d, nil
 }
 
-func (i *mosaicInventory) SetStatus(id string, status string) error {
+func (i *mosaicInventory) SetStatus(id mosaicID, status string) error {
 	for _, d := range i.mosaics {
 		if d.ID == id {
 			d.Status = status
@@ -58,8 +58,8 @@ func (i *mosaicInventory) SetStatus(id string, status string) error {
 	return nil
 }
 
-func (i *mosaicInventory) StoreImage(id string, m image.Image) error {
-	if err := i.ImageCache.Put(id, m); err != nil {
+func (i *mosaicInventory) StoreImage(id mosaicID, m image.Image) error {
+	if err := i.ImageCache.Put(string(id), m); err != nil {
 		return err
 	}
 	if err := i.SetStatus(id, MosaicStatusCreated); err != nil {
@@ -72,7 +72,7 @@ func (i *mosaicInventory) Size() int {
 	return len(i.mosaics)
 }
 
-func (i *mosaicInventory) List() []*mosaicData {
+func (i *mosaicInventory) List() []*mosaicRecord {
 	return i.mosaics
 }
 

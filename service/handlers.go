@@ -60,9 +60,18 @@ func Serve() {
 // GET /mosaics
 // List all mosaics that have been created.
 
+func newMosaicRes(m *mosaicRecord) *mosaicRes {
+	return &mosaicRes{
+		ID:     string(m.ID),
+		Tag:    m.Tag,
+		Status: m.Status,
+		URL:    fmt.Sprintf("/mosaics?id=%s", m.ID),
+	}
+}
+
 type mosaicsListRes struct {
-	OK      bool        `json:"ok"`
-	Mosaics []mosaicRes `json:"mosaics"`
+	OK      bool         `json:"ok"`
+	Mosaics []*mosaicRes `json:"mosaics"`
 }
 
 type mosaicRes struct {
@@ -75,15 +84,10 @@ type mosaicRes struct {
 func handleListMosaics(w http.ResponseWriter, r *http.Request) {
 	res := &mosaicsListRes{
 		true,
-		make([]mosaicRes, mosaics.Size()),
+		make([]*mosaicRes, mosaics.Size()),
 	}
 	for i, m := range mosaics.List() {
-		res.Mosaics[i] = mosaicRes{
-			ID:     m.ID,
-			Tag:    m.Tag,
-			Status: m.Status,
-			URL:    fmt.Sprintf("/mosaics?id=%s", m.ID),
-		}
+		res.Mosaics[i] = newMosaicRes(m)
 	}
 	respondOK(w, res)
 }
@@ -97,11 +101,6 @@ var (
 	unitY       = 150
 	paletteSize = 256
 )
-
-type mosaicReq struct {
-	OK bool   `json:"ok"`
-	ID string `json:"id"`
-}
 
 func handleCreateMosaic(w http.ResponseWriter, r *http.Request) {
 	// Read tag.
@@ -123,46 +122,48 @@ func handleCreateMosaic(w http.ResponseWriter, r *http.Request) {
 		respondErr(w, http.StatusBadRequest, "image parsing failed")
 	}
 
+	// Create a record to track the mosaic.
+	m, err := mosaics.Create(tag)
+	if err != nil {
+		respondErr(w, http.StatusBadRequest, "failed to create record")
+		return
+	}
+
 	// Generate mosaic offline.
-	id := mosaics.NextID()
 	go func() {
-		if err := mosaics.Create(id, tag); err != nil {
-			log.Printf("Failed to store mosaic: %s", err)
-			return
-		}
 
 		log.Printf("Waiting for tags...\n")
 		<-ch
 		log.Printf("Tags are ready...\n")
 
-		log.Printf("Mosaic[%s] Create Palette...", id)
+		log.Printf("Mosaic[%s] Create Palette...", m.ID)
 		p := mosaic.NewImagePalette(paletteSize, unitX, unitY)
 		if err := thumbs.PopulatePalette(tag, p); err != nil {
 			log.Printf("Failed to populate palette: %s", err)
-			if err := mosaics.SetStatus(id, MosaicStatusFailed); err != nil {
+			if err := mosaics.SetStatus(m.ID, MosaicStatusFailed); err != nil {
 				log.Printf("Failed to set mosaic failed: %s", err)
 			}
 			return
 		}
-		log.Printf("Mosaic[%s] Create Palette Done with %d colors, %d images.", id, p.Size(), p.NumImages())
+		log.Printf("Mosaic[%s] Create Palette Done with %d colors, %d images.", m.ID, p.Size(), p.NumImages())
 
-		if err := mosaics.SetStatus(id, MosaicStatusWorking); err != nil {
+		if err := mosaics.SetStatus(m.ID, MosaicStatusWorking); err != nil {
 			log.Printf("Failed to set working status: %s", err)
 			return
 		}
 
-		log.Printf("Mosaic[%s] Compose...", id)
+		log.Printf("Mosaic[%s] Compose...", m.ID)
 		out := mosaic.Compose(in, units, units, p)
-		log.Printf("Mosaic[%s] Compose Done.", id)
+		log.Printf("Mosaic[%s] Compose Done.", m.ID)
 
-		if err := mosaics.StoreImage(id, out); err != nil {
+		if err := mosaics.StoreImage(m.ID, out); err != nil {
 			log.Printf("Failed to store mosaic image: %s", err)
 			return
 		}
 	}()
 
-	// Respond immediately with the ID.
-	res := mosaicReq{true, id}
+	// Respond immediately.
+	res := newMosaicRes(m)
 	respondOK(w, res)
 }
 
