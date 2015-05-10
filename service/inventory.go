@@ -71,9 +71,6 @@ func (i *mosaicInventory) StoreImage(id mosaicID, m image.Image) error {
 	if err := i.cache.Put(string(id), m); err != nil {
 		return err
 	}
-	if err := i.SetStatus(id, MosaicStatusCreated); err != nil {
-		return i.SetStatus(id, MosaicStatusFailed)
-	}
 	return nil
 }
 
