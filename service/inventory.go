@@ -24,7 +24,7 @@ var (
 
 // Inventory of mosaics that have been created.
 type mosaicInventory struct {
-	mosaic.ImageCache
+	cache   mosaic.ImageCache
 	mosaics []*mosaicRecord
 }
 
@@ -48,6 +48,15 @@ func (i *mosaicInventory) Create(tag string) (*mosaicRecord, error) {
 	return d, nil
 }
 
+func (i *mosaicInventory) Get(id mosaicID) (*mosaicRecord, error) {
+	for _, m := range i.mosaics {
+		if m.ID == id {
+			return m, nil
+		}
+	}
+	return nil, nil
+}
+
 func (i *mosaicInventory) SetStatus(id mosaicID, status string) error {
 	for _, d := range i.mosaics {
 		if d.ID == id {
@@ -59,13 +68,17 @@ func (i *mosaicInventory) SetStatus(id mosaicID, status string) error {
 }
 
 func (i *mosaicInventory) StoreImage(id mosaicID, m image.Image) error {
-	if err := i.ImageCache.Put(string(id), m); err != nil {
+	if err := i.cache.Put(string(id), m); err != nil {
 		return err
 	}
 	if err := i.SetStatus(id, MosaicStatusCreated); err != nil {
 		return i.SetStatus(id, MosaicStatusFailed)
 	}
 	return nil
+}
+
+func (i *mosaicInventory) GetImage(id mosaicID) (image.Image, error) {
+	return i.cache.Get(string(id))
 }
 
 func (i *mosaicInventory) Size() int {

@@ -21,6 +21,7 @@ func init() {
 		}
 		handleGetInventory(w, r)
 	})
+	http.HandleFunc("/mosaics/img", handleRenderMosaic)
 	http.HandleFunc("/mosaics", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == "POST" {
 			handleCreateMosaic(w, r)
@@ -51,7 +52,7 @@ func Serve() {
 		tags:           make(map[string]chan bool),
 	}
 	mosaics = &mosaicInventory{
-		ImageCache: mosaicsCache,
+		cache: mosaicsCache,
 	}
 
 	log.Fatal(http.ListenAndServe(":8080", nil))
@@ -66,6 +67,7 @@ func newMosaicRes(m *mosaicRecord) *mosaicRes {
 		Tag:    m.Tag,
 		Status: m.Status,
 		URL:    fmt.Sprintf("/mosaics?id=%s", m.ID),
+		ImgURL: fmt.Sprintf("/mosaics/img?id=%s", m.ID),
 	}
 }
 
@@ -79,6 +81,7 @@ type mosaicRes struct {
 	Tag    string `json:"tag"`
 	Status string `json:"status"`
 	URL    string `json:"url"`
+	ImgURL string `json:"img"`
 }
 
 func handleListMosaics(w http.ResponseWriter, r *http.Request) {
@@ -168,7 +171,7 @@ func handleCreateMosaic(w http.ResponseWriter, r *http.Request) {
 }
 
 // GET /mosaics?id=<id>
-// Get a mosaic that was created.
+// Get information about a mosaic.
 
 func handleGetMosaic(w http.ResponseWriter, r *http.Request) {
 	// Read id.
@@ -177,13 +180,36 @@ func handleGetMosaic(w http.ResponseWriter, r *http.Request) {
 		respondErr(w, http.StatusBadRequest, "missing 'id' param")
 		return
 	}
-	if !mosaics.Has(id) {
+	m, err := mosaics.Get(mosaicID(id))
+	if err != nil {
+		respondErr(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	if m == nil {
 		http.NotFound(w, r)
 		return
 	}
-	img, err := mosaics.Get(id)
+	res := newMosaicRes(m)
+	respondOK(w, res)
+}
+
+// GET /mosaics/img?id=<id>
+// Get a mosaic image that was created.
+
+func handleRenderMosaic(w http.ResponseWriter, r *http.Request) {
+	// Read id.
+	id := r.FormValue("id")
+	if id == "" {
+		respondErr(w, http.StatusBadRequest, "missing 'id' param")
+		return
+	}
+	img, err := mosaics.GetImage(mosaicID(id))
 	if err != nil {
 		respondErr(w, http.StatusInternalServerError, "getting image")
+	}
+	if img == nil {
+		http.NotFound(w, r)
+		return
 	}
 	err = jpeg.Encode(w, img, nil)
 	if err != nil {
