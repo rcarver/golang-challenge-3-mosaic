@@ -63,6 +63,7 @@ func Serve() {
 
 func newMosaicRes(m *mosaicRecord) *mosaicRes {
 	return &mosaicRes{
+		OK:     true,
 		ID:     string(m.ID),
 		Tag:    m.Tag,
 		Status: m.Status,
@@ -77,6 +78,7 @@ type mosaicsListRes struct {
 }
 
 type mosaicRes struct {
+	OK     bool   `json:"ok"`
 	ID     string `json:"id"`
 	Tag    string `json:"tag"`
 	Status string `json:"status"`
