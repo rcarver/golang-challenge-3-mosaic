@@ -15,3 +15,5 @@ This is an official entry.
   * PatternImage = Draw Grid as pixels with FloydSteinberg and palette (dither)
   * Output = new image as pixels * unit size
   * For each pixel in PatternImage, pull an image from the palette and place it at x,y
+  * http://tech-algorithm.com/articles/nearest-neighbor-image-scaling/
+
