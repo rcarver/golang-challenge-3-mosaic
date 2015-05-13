@@ -1,3 +1,5 @@
 golang-challenge-3-mosaic
 *.png
+*.jpg
 cache
+images
