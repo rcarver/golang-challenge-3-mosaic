@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"image"
+	"image/color/palette"
 	"image/jpeg"
 	"log"
 	"os"
@@ -149,12 +150,19 @@ var (
 )
 
 func generateMosaic(src image.Image, tag string, units int, solid bool, inv *mosaic.ImageInventory) (image.Image, error) {
-	p := mosaic.NewImagePalette(paletteSize, thumbSize, thumbSize)
-	if !solid {
+	var p *mosaic.ImagePalette
+	if solid {
+		p = mosaic.NewSolidPalette(palette.WebSafe, thumbSize, thumbSize)
+		log.Printf("Generating %dx%d solid mosaic with %d colors", units, units, p.Size())
+	} else {
+		p = mosaic.NewImagePalette(paletteSize, thumbSize, thumbSize)
 		if err := inv.PopulatePalette(p); err != nil {
 			return nil, err
 		}
+		if p.Size() == 0 {
+			return nil, fmt.Errorf("No images are available")
+		}
+		log.Printf("Generating %dx%d %s mosaic with %d colors and %d images\n", units, units, tag, p.Size(), p.NumImages())
 	}
-	log.Printf("Generating %s mosaic with %d colors and %d images\n", tag, p.Size(), p.NumImages())
 	return mosaic.Compose(src, units, units, p), nil
 }
