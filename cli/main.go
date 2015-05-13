@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"image"
 	"image/jpeg"
+	"log"
 	"os"
 	"path"
+	"time"
 
 	"github.com/rcarver/golang-challenge-3-mosaic/instagram"
 	"github.com/rcarver/golang-challenge-3-mosaic/mosaic"
@@ -131,9 +133,11 @@ func newInventory(dir string) *mosaic.ImageInventory {
 
 func downloadImages(tag string, numImages int, inv *mosaic.ImageInventory) error {
 	api := instagram.NewClient()
-	if err := inv.Fetch(api, tag, numImages); err != nil {
+	fetcher := instagram.NewTagFetcher(api, tag)
+	if err := inv.Fetch(fetcher, numImages); err != nil {
 		return err
 	}
+	time.Sleep(1 * time.Second)
 	return nil
 }
 
@@ -151,5 +155,6 @@ func generateMosaic(src image.Image, tag string, units int, solid bool, inv *mos
 			return nil, err
 		}
 	}
+	log.Printf("Generating %s mosaic with %d colors and %d images\n", tag, p.Size(), p.NumImages())
 	return mosaic.Compose(src, units, units, p), nil
 }

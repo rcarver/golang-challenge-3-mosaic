@@ -68,14 +68,16 @@ func (i *mosaicInventory) SetStatus(id mosaicID, status string) error {
 }
 
 func (i *mosaicInventory) StoreImage(id mosaicID, m image.Image) error {
-	if err := i.cache.Put(string(id), m); err != nil {
+	key := i.cache.Key(string(id))
+	if err := i.cache.Put(key, m); err != nil {
 		return err
 	}
 	return nil
 }
 
 func (i *mosaicInventory) GetImage(id mosaicID) (image.Image, error) {
-	return i.cache.Get(string(id))
+	key := i.cache.Key(string(id))
+	return i.cache.Get(key)
 }
 
 func (i *mosaicInventory) Size() int {
@@ -86,29 +88,54 @@ func (i *mosaicInventory) List() []*mosaicRecord {
 	return i.mosaics
 }
 
+type tagCacheFunc func(string) mosaic.ImageCache
+
 // thumbInventory tracks the thumbnails that have been acquired.
 type thumbInventory struct {
-	*mosaic.ImageInventory
+	tagCacheFunc
 	api *instagram.Client
 
-	mu   sync.Mutex
-	tags map[string]chan bool
+	mu     sync.Mutex
+	images map[string]*mosaic.ImageInventory
+	states map[string]chan bool
 }
 
 func (i *thumbInventory) AddTag(tag string) chan bool {
 	i.mu.Lock()
 	defer i.mu.Unlock()
-	if ch, ok := i.tags[tag]; ok {
+
+	// Initialize the inventory.
+	if _, ok := i.images[tag]; !ok {
+		cache := i.tagCacheFunc(tag)
+		i.images[tag] = mosaic.NewImageInventory(cache)
+
+	}
+	inv := i.images[tag]
+
+	// Initialize the state.
+	if ch, ok := i.states[tag]; ok {
 		log.Printf("AddTag(%s) already has it\n", tag)
 		return ch
 	}
+	i.states[tag] = make(chan bool)
+
 	log.Printf("AddTag(%s) beginning fetch\n", tag)
-	i.tags[tag] = make(chan bool)
 	go func() {
-		if err := i.Fetch(i.api, tag, imagesPerTag); err != nil {
+		fetcher := instagram.NewTagFetcher(i.api, tag)
+		if err := inv.Fetch(fetcher, imagesPerTag); err != nil {
 			log.Printf("Failed to fetch tag %s: %s", tag, err)
 		}
-		close(i.tags[tag])
+		close(i.states[tag])
 	}()
-	return i.tags[tag]
+
+	return i.states[tag]
+}
+
+func (i *thumbInventory) PopulatePalette(tag string, p *mosaic.ImagePalette) error {
+	inventory, ok := i.images[tag]
+	if !ok {
+		return nil
+	}
+	return inventory.PopulatePalette(p)
+
 }

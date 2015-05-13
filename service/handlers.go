@@ -8,6 +8,7 @@ import (
 	_ "image/png"
 	"log"
 	"net/http"
+	"path"
 
 	"github.com/rcarver/golang-challenge-3-mosaic/instagram"
 	"github.com/rcarver/golang-challenge-3-mosaic/mosaic"
@@ -43,16 +44,20 @@ var thumbs *thumbInventory
 var mosaics *mosaicInventory
 
 func Serve() {
-	thumbsCache := mosaic.FileImageCache{"./cache/thumbs"}
-	mosaicsCache := mosaic.FileImageCache{"./cache/mosaics"}
+	thumbsCachePath := "./cache/thumbs"
+	mosaicsCachePath := "./cache/mosaics"
 
-	thumbs = &thumbInventory{
-		ImageInventory: mosaic.NewImageInventory(thumbsCache),
-		api:            instagram.NewClient(),
-		tags:           make(map[string]chan bool),
-	}
 	mosaics = &mosaicInventory{
-		cache: mosaicsCache,
+		cache: mosaic.FileImageCache{mosaicsCachePath},
+	}
+	thumbs = &thumbInventory{
+		tagCacheFunc: func(tag string) mosaic.ImageCache {
+			path := path.Join(thumbsCachePath, tag)
+			return mosaic.FileImageCache{path}
+		},
+		api:    instagram.NewClient(),
+		images: make(map[string]*mosaic.ImageInventory),
+		states: make(map[string]chan bool),
 	}
 
 	log.Fatal(http.ListenAndServe(":8080", nil))
@@ -270,14 +275,14 @@ type inventoryImageRes struct {
 func handleGetInventory(w http.ResponseWriter, r *http.Request) {
 	res := &inventoryRes{
 		true,
-		make([]inventoryImageRes, 0, len(thumbs.Tags)),
+		make([]inventoryImageRes, 0),
 	}
-	for t, keys := range thumbs.Tags {
-		res.Images = append(res.Images, inventoryImageRes{
-			Tag:   t,
-			Count: len(keys),
-		})
-	}
+	//for t, keys := range thumbs.Tags {
+	//res.Images = append(res.Images, inventoryImageRes{
+	//Tag:   t,
+	//Count: len(keys),
+	//})
+	//}
 	respondOK(w, res)
 }
 

@@ -45,25 +45,28 @@ func (ii *ImageInventory) PopulatePalette(palette *ImagePalette) error {
 }
 
 // Fetch pulls new images from the api and adds them to the inventory.
-func (ii *ImageInventory) Fetch(api *instagram.Client, tag string, max int) error {
-	res, err := api.Tagged(tag, "")
-	if err != nil {
-		return err
-	}
+func (ii *ImageInventory) Fetch(fetcher instagram.Fetcher, max int) error {
+	ch, done := fetcher.Fetch()
+	defer close(done)
+
+	var m *instagram.Media
+	var count int
 	for {
-		for _, m := range res.Media {
-			if ii.cache.Size() >= max {
-				return nil
-			}
-			err := ii.cacheImage(m)
+		select {
+		case m = <-ch:
+			err := ii.cacheImage(*m)
 			if err != nil {
 				return err
 			}
-		}
-		log.Printf("Fetch(%s) got %d of %d\n", tag, ii.cache.Size(), max)
-		res, err = api.Tagged(tag, res.MaxTagID)
-		if err != nil {
-			return err
+			count++
+			size := ii.cache.Size()
+			if count%20 == 0 {
+				log.Printf("Pulled %d, stored %d\n", count, size)
+			}
+			if size >= max {
+				return nil
+			}
+
 		}
 	}
 	return nil
@@ -116,9 +119,9 @@ type FileImageCache struct {
 	Dir string
 }
 
-func (c FileImageCache) Key(name string) string {
+func (c FileImageCache) Key(name string) ImageCacheKey {
 	k := sha1.Sum([]byte(name))
-	return hex.EncodeToString(k[:])
+	return ImageCacheKey(hex.EncodeToString(k[:]))
 }
 
 func (c FileImageCache) Put(key ImageCacheKey, m image.Image) error {
