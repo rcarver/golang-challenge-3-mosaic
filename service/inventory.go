@@ -139,3 +139,11 @@ func (i *thumbInventory) PopulatePalette(tag string, p *mosaic.ImagePalette) err
 	return inventory.PopulatePalette(p)
 
 }
+
+func (i *thumbInventory) Contents() map[string]int {
+	res := make(map[string]int)
+	for tag, inv := range i.images {
+		res[tag] = inv.Size()
+	}
+	return res
+}

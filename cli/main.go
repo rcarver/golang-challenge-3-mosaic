@@ -36,11 +36,11 @@ mosaic -run generate -dir images -tag balloon -in balloon.jpg -out balloon-mosai
 `
 
 func init() {
-	flag.StringVar(&command, "run", "", "command to run: download | generate | serve")
+	flag.StringVar(&command, "run", "", "command to run: fetch | gen | serve")
 
 	// Download, Generate
 	flag.StringVar(&tag, "tag", "cat", "image tag to use")
-	flag.StringVar(&tagDirName, "dir", "./images", "dir to store images by tag")
+	flag.StringVar(&tagDirName, "dir", "./cache/thumbs", "dir to store images by tag")
 
 	// Download
 	flag.IntVar(&numImages, "num", 1000, "number of images to download")
@@ -71,13 +71,13 @@ func main() {
 	inventory := newInventory(dir)
 
 	switch command {
-	case "download":
+	case "fetch":
 		if err := downloadImages(tag, numImages, inventory); err != nil {
 			fmt.Printf("Download error: %s\n", err)
 			os.Exit(1)
 		}
 		os.Exit(0)
-	case "generate":
+	case "gen":
 		if inName == "" {
 			fmt.Printf("Missing -in file\n")
 			os.Exit(1)

@@ -73,7 +73,7 @@ func (ii *ImageInventory) Fetch(fetcher instagram.Fetcher, max int) error {
 }
 
 // Size returns the number of images in the inventory.
-func (ii *ImageInventory) Size(tag string) int {
+func (ii *ImageInventory) Size() int {
 	return ii.cache.Size()
 }
 

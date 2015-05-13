@@ -8,6 +8,7 @@ import (
 	_ "image/png"
 	"log"
 	"net/http"
+	"os"
 	"path"
 
 	"github.com/rcarver/golang-challenge-3-mosaic/instagram"
@@ -44,15 +45,21 @@ var thumbs *thumbInventory
 var mosaics *mosaicInventory
 
 func Serve() {
-	thumbsCachePath := "./cache/thumbs"
-	mosaicsCachePath := "./cache/mosaics"
+	thumbsCachePath := "./images/thumbs"
+	mosaicsCachePath := "./images/mosaics"
 
+	if err := os.MkdirAll(mosaicsCachePath, 0755); err != nil {
+		log.Fatalf("Failed to create cache dir: %s\n", err)
+	}
 	mosaics = &mosaicInventory{
 		cache: mosaic.FileImageCache{mosaicsCachePath},
 	}
 	thumbs = &thumbInventory{
 		tagCacheFunc: func(tag string) mosaic.ImageCache {
 			path := path.Join(thumbsCachePath, tag)
+			if err := os.MkdirAll(path, 0755); err != nil {
+				log.Fatalf("Failed to create cache dir: %s\n", err)
+			}
 			return mosaic.FileImageCache{path}
 		},
 		api:    instagram.NewClient(),
@@ -277,12 +284,12 @@ func handleGetInventory(w http.ResponseWriter, r *http.Request) {
 		true,
 		make([]inventoryImageRes, 0),
 	}
-	//for t, keys := range thumbs.Tags {
-	//res.Images = append(res.Images, inventoryImageRes{
-	//Tag:   t,
-	//Count: len(keys),
-	//})
-	//}
+	for tag, num := range thumbs.Contents() {
+		res.Images = append(res.Images, inventoryImageRes{
+			Tag:   tag,
+			Count: num,
+		})
+	}
 	respondOK(w, res)
 }
 
