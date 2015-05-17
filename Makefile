@@ -1,17 +1,21 @@
 run:
-	rm -f output.png
-	go run cli/main.go
-	test -f output.png && open output.png
-
-test:
-	go test
-
+	rm -f output.jpg
+	go install github.com/rcarver/golang-challenge-3-mosaic/mosaicly
+	$$GOPATH/bin/mosaicly -run fetch -tag balloon
+	$$GOPATH/bin/mosaicly -run gen -tag balloon -in fixtures/balloon.jpg -out output.jpg
+	test -f output.jpg && open output.jpg
 
 serve:
-	go run cli/main.go -run serve
+	$$GOPATH/bin/mosaicly -run serve
+
+service_test:
+	./service_test.sh
+
+test: test_unit test_serve
+
+test_unit:
+	go test
 
 test_serve: 
 	$(MAKE) -j serve service_test
 
-service_test:
-	./service_test.sh
