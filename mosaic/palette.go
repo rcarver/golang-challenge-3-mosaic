@@ -71,8 +71,34 @@ func (p *ImagePalette) Add(m image.Image) {
 	//fmt.Printf("Add(%v) %d\n", c, len(p.images[i]))
 }
 
+// AtColor returns an image whose average color is closest to c in the palette.
+func (p *ImagePalette) AtColor(c color.Color) image.Image {
+	i := p.Index(c)
+	images, ok := p.images[i]
+	if ok {
+		idx := p.indices[i]
+		p.indices[i]++
+		if p.indices[i] > len(images) {
+			p.indices[i] = 0
+			idx = 0
+		}
+		//fmt.Printf("%v %d is %v\n", c, idx, images[idx].At(0, 0))
+		return images[idx]
+	}
+	if p.solidFallback {
+		x := p.Convert(c)
+		return image.NewUniform(x)
+	}
+	return nil
+}
+
 // Size returns the number of colors in the palette.
 func (p *ImagePalette) Size() int {
+	return len(p.Palette)
+}
+
+// NumColors returns the number of colors in the palette.
+func (p *ImagePalette) NumColors() int {
 	return len(p.Palette)
 }
 
@@ -83,26 +109,4 @@ func (p *ImagePalette) NumImages() int {
 		c += len(images)
 	}
 	return c
-}
-
-// AtColor returns an image whose average color is closest to c in the palette.
-func (p *ImagePalette) AtColor(c color.Color) image.Image {
-	i := p.Index(c)
-	x := p.Convert(c)
-	a, ok := p.images[i]
-	if ok {
-		idx := p.indices[i]
-		p.indices[i]++
-		if p.indices[i] > len(p.images[i]) {
-			p.indices[i] = 0
-			idx = 0
-		}
-		//fmt.Printf("AtColor() Got image for %v, choosing idx %d of %d\n", x, idx, len(p.images[i]))
-		return a[idx]
-	}
-	if p.solidFallback {
-		return image.NewUniform(x)
-	}
-	//fmt.Printf("AtColor() Missing image for %v\n", x)
-	return nil
 }
