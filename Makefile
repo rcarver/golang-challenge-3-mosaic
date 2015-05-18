@@ -3,12 +3,12 @@ build:
 
 run: build
 	rm -f output.jpg
-	$$GOPATH/bin/mosaicly -run fetch -tag balloon
-	$$GOPATH/bin/mosaicly -run gen -tag balloon -in fixtures/balloon.jpg -out output.jpg
+	$$GOPATH/bin/mosaicly fetch -tag balloon
+	$$GOPATH/bin/mosaicly gen -tag balloon -in fixtures/balloon.jpg -out output.jpg
 	test -f output.jpg && open output.jpg
 
 serve: build
-	$$GOPATH/bin/mosaicly -run serve
+	$$GOPATH/bin/mosaicly serve
 
 test: test_unit test_cli test_service 
 

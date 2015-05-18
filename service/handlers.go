@@ -122,7 +122,7 @@ func handleListMosaics(w http.ResponseWriter, r *http.Request) {
 // Create a new mosaic.
 
 var (
-	units       = 40
+	Units       = 40
 	unitX       = 150
 	unitY       = 150
 	paletteSize = 256
@@ -190,7 +190,7 @@ func generateMosaic(tag string, in image.Image, m *mosaicRecord) {
 
 	// Generate the mosaic.
 	log.Printf("Mosaic[%s] Compose...", m.ID)
-	out := mosaic.Compose(in, units, units, unitX, unitY, p)
+	out := mosaic.Compose(in, Units, Units, unitX, unitY, p)
 	log.Printf("Mosaic[%s] Compose Done.", m.ID)
 
 	// Store the image and update the the mosaic is done.

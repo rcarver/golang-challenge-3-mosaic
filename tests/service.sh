@@ -18,7 +18,7 @@ tag="balloon"
 img="balloon.jpg"
 
 log "Starting server..."
-$mosaicly -run serve -dir $dir -port $port -num 5 &
+$mosaicly serve -dir $dir -port $port -num 5 -units 10 &
 sleep 1
 
 log "Create a new mosaic..."

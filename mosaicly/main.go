@@ -17,7 +17,9 @@ import (
 )
 
 var (
-	command     string
+	fetch       *flag.FlagSet
+	gen         *flag.FlagSet
+	serve       *flag.FlagSet
 	tag         string
 	baseDirName string
 	imgDirName  string
@@ -38,32 +40,51 @@ mosaic -run generate -dir images -tag balloon -in balloon.jpg -out balloon-mosai
 `
 
 func init() {
-	flag.StringVar(&command, "run", "", "command to run: fetch | gen | serve")
+	fetch = flag.NewFlagSet("fetch", flag.ExitOnError)
+	fetch.StringVar(&baseDirName, "dir", "./cache/thumbs", "dir to store images by tag")
+	fetch.StringVar(&tag, "tag", "cat", "image tag to use")
+	fetch.IntVar(&numImages, "num", 1000, "number of images to download")
 
-	// fetch, gen, serve
-	flag.StringVar(&baseDirName, "dir", "./cache/thumbs", "dir to store images by tag")
+	gen = flag.NewFlagSet("gen", flag.ExitOnError)
+	gen.StringVar(&baseDirName, "dir", "./cache/thumbs", "dir to store images by tag")
+	gen.StringVar(&tag, "tag", "cat", "image tag to use")
+	gen.StringVar(&inName, "in", "", "image file to read")
+	gen.StringVar(&outName, "out", "./mosaic.jpg", "image file to write")
+	gen.StringVar(&imgDirName, "imgdir", "", "dir to find images (uses $dir/thumbs/$tag by default)")
+	gen.IntVar(&units, "units", 40, "number of units wide to generate the mosaic")
+	gen.BoolVar(&solid, "solid", false, "generate a mosaic with solid colors, not images")
 
-	// fetch, gen
-	flag.StringVar(&tag, "tag", "cat", "image tag to use")
-
-	// fetch
-	flag.IntVar(&numImages, "num", 1000, "number of images to download")
-
-	// gen
-	flag.StringVar(&inName, "in", "", "image file to read")
-	flag.StringVar(&outName, "out", "./mosaic.jpg", "image file to write")
-	flag.StringVar(&imgDirName, "imgdir", "", "dir to find images (uses tagdir + tag by default)")
-
-	// gen, serve
-	flag.IntVar(&units, "units", 40, "number of units wide to generate the mosaic")
-	flag.BoolVar(&solid, "solid", false, "generate a mosaic with solid colors, not images")
-
-	// serve
-	flag.IntVar(&port, "port", 8080, "port number of the server")
+	serve = flag.NewFlagSet("serve", flag.ExitOnError)
+	serve.StringVar(&baseDirName, "dir", "./cache", "dir to store thumbs and mosaics")
+	serve.IntVar(&numImages, "num", 1000, "number of images to download")
+	serve.IntVar(&units, "units", 40, "number of units wide to generate the mosaic")
+	serve.IntVar(&port, "port", 8080, "port number of the server")
 }
 
 func main() {
-	flag.Parse()
+	usage := fmt.Sprintf("Usage: %s <command> <args>", path.Base(os.Args[0]))
+	if len(os.Args) == 1 {
+		fmt.Println(usage)
+		os.Exit(2)
+	}
+	command := os.Args[1]
+	switch command {
+	case "fetch":
+		fetch.Parse(os.Args[2:])
+	case "gen":
+		gen.Parse(os.Args[2:])
+	case "serve":
+		serve.Parse(os.Args[2:])
+	default:
+		fmt.Println(usage)
+		fmt.Printf("fetch:\n")
+		fetch.PrintDefaults()
+		fmt.Printf("gen:\n")
+		gen.PrintDefaults()
+		fmt.Printf("serve:\n")
+		serve.PrintDefaults()
+		os.Exit(2)
+	}
 
 	// thumbsDir is imgDirName if set, or join(baseDirName, "thumbs", tag)
 	var thumbsDir string
@@ -131,6 +152,7 @@ func main() {
 		service.MosaicsDir = path.Join(baseDirName, "mosaics")
 		service.ThumbsDir = path.Join(baseDirName, "thumbs")
 		service.ImagesPerTag = numImages
+		service.Units = units
 		service.Serve()
 		os.Exit(0)
 	default:
