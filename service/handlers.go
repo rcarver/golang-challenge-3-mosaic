@@ -61,7 +61,7 @@ func Serve() {
 		log.Fatalf("Failed to create thumbs dir: %s\n", err)
 	}
 	mosaics = &mosaicInventory{
-		cache: mosaic.FileImageCache{MosaicsDir},
+		cache: mosaic.NewFileImageCache(MosaicsDir),
 	}
 	thumbs = &thumbInventory{
 		tagCacheFunc: func(tag string) mosaic.ImageCache {
@@ -69,7 +69,7 @@ func Serve() {
 			if err := os.MkdirAll(path, 0755); err != nil {
 				log.Fatalf("Failed to create cache dir: %s\n", err)
 			}
-			return mosaic.FileImageCache{path}
+			return mosaic.NewFileImageCache(path)
 		},
 		api:    instagram.NewClient(),
 		images: make(map[string]*mosaic.ImageInventory),

@@ -69,7 +69,6 @@ func (ii *ImageInventory) Fetch(fetcher instagram.Fetcher, max int) error {
 
 		}
 	}
-	return nil
 }
 
 // Size returns the number of images in the inventory.
@@ -117,6 +116,11 @@ type ImageCache interface {
 // FileImageCache implements an ImageCache on the filesystem.
 type FileImageCache struct {
 	Dir string
+}
+
+// NewFileImageCache initializes a new cache to store images on the filesystem.
+func NewFileImageCache(dir string) *FileImageCache {
+	return &FileImageCache{dir}
 }
 
 func (c FileImageCache) Key(name string) ImageCacheKey {

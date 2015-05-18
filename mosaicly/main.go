@@ -162,7 +162,7 @@ func main() {
 }
 
 func newInventory(dir string) *mosaic.ImageInventory {
-	cache := mosaic.FileImageCache{dir}
+	cache := mosaic.NewFileImageCache(dir)
 	return mosaic.NewImageInventory(cache)
 }
 
