@@ -24,8 +24,8 @@ func TestMosiac_Dither(t *testing.T) {
 
 func TestMosiac_Compose(t *testing.T) {
 	in := solidImg(image.Rect(0, 0, 500, 500), color.White)
-	mos := Mosaic{UnitsX: 10, UnitsY: 10, img: in}
-	pal := NewSolidPalette(palette.WebSafe, 10, 10)
+	mos := Mosaic{10, 10, 10, 10, in}
+	pal := NewSolidPalette(palette.WebSafe)
 	out := mos.Compose(pal)
 	if got, want := out.Bounds().Dx(), 100; got != want {
 		t.Errorf("x got %d, want %d", got, want)

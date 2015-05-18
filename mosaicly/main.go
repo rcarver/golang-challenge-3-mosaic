@@ -152,10 +152,10 @@ var (
 func generateMosaic(src image.Image, tag string, units int, solid bool, inv *mosaic.ImageInventory) (image.Image, error) {
 	var p *mosaic.ImagePalette
 	if solid {
-		p = mosaic.NewSolidPalette(palette.WebSafe, thumbSize, thumbSize)
+		p = mosaic.NewSolidPalette(palette.WebSafe)
 		log.Printf("Generating %dx%d solid mosaic with %d colors", units, units, p.Size())
 	} else {
-		p = mosaic.NewImagePalette(paletteSize, thumbSize, thumbSize)
+		p = mosaic.NewImagePalette(paletteSize)
 		if err := inv.PopulatePalette(p); err != nil {
 			return nil, err
 		}
@@ -164,5 +164,5 @@ func generateMosaic(src image.Image, tag string, units int, solid bool, inv *mos
 		}
 		log.Printf("Generating %dx%d %s mosaic with %d colors and %d images\n", units, units, tag, p.Size(), p.NumImages())
 	}
-	return mosaic.Compose(src, units, units, p), nil
+	return mosaic.Compose(src, units, units, thumbSize, thumbSize, p), nil
 }

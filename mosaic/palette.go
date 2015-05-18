@@ -10,7 +10,6 @@ import (
 // used is rotated through available options.
 type ImagePalette struct {
 	color.Palette
-	ImgX, ImgY    int
 	solidFallback bool
 	images        map[int][]image.Image
 	indices       map[int]int
@@ -19,11 +18,9 @@ type ImagePalette struct {
 // NewImagePalette initializes an ImagePalette of a number of colors, and
 // images of a certain size. This palette must be populated with images to be
 // useful.
-func NewImagePalette(colors, width, height int) *ImagePalette {
+func NewImagePalette(colors int) *ImagePalette {
 	return &ImagePalette{
 		Palette:       make(color.Palette, 0, colors),
-		ImgX:          width,
-		ImgY:          height,
 		solidFallback: false,
 		images:        make(map[int][]image.Image),
 		indices:       make(map[int]int),
@@ -33,11 +30,9 @@ func NewImagePalette(colors, width, height int) *ImagePalette {
 // NewSolidPalette initializes an ImagePalette with a given color palette and
 // images of a certain size. This palette does not need to be populated with
 // images - instead, solid images will be returned for any color index.
-func NewSolidPalette(palette color.Palette, width, height int) *ImagePalette {
+func NewSolidPalette(palette color.Palette) *ImagePalette {
 	return &ImagePalette{
 		Palette:       palette,
-		ImgX:          width,
-		ImgY:          height,
 		solidFallback: true,
 	}
 }

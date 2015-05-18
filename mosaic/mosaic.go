@@ -9,9 +9,9 @@ import (
 
 // Compose returns a new composite mosaic image from the input source. The output
 // image size is determined by the number of units and the size of images in
-// the palette - (w * p.ImgX) x (h * p.ImgY).
-func Compose(in image.Image, w, h int, p *ImagePalette) image.Image {
-	m := Mosaic{w, h, in}
+// the palette - (ux * tx) x (uy * ty).
+func Compose(in image.Image, ux, uy, tx, ty int, p *ImagePalette) image.Image {
+	m := Mosaic{ux, uy, tx, ty, in}
 	return m.Compose(p)
 }
 
@@ -25,11 +25,16 @@ var sampleRadius = .5
 // Mosaic is an image that is downsampled to a very coarse pixel grid and then
 // rendered with a full image represending each pixel.
 type Mosaic struct {
-	// UnitsX is how many grid units (pixels) wide.
+	// UnitsX is how many units wide.
 	UnitsX int
-	// UnitsY is how many grid units (pixels) tall.
+	// UnitsY is how many units tall.
 	UnitsY int
-	img    image.Image
+	// ThumbX is the width of each unit, in pixels.
+	ThumbX int
+	// ThumbY is the height of each unit, in pixels.
+	ThumbY int
+
+	img image.Image
 }
 
 // Dither generates a new image that has been downsampled and dithered to a
@@ -48,7 +53,7 @@ func (m Mosaic) Compose(p *ImagePalette) image.Image {
 	db := d.Bounds()
 
 	// Create an output image.
-	out := image.NewRGBA(image.Rect(0, 0, m.UnitsX*p.ImgX, m.UnitsY*p.ImgY))
+	out := image.NewRGBA(image.Rect(0, 0, m.UnitsX*m.ThumbX, m.UnitsY*m.ThumbY))
 
 	// Iterate over the dither pattern and pull an image from the palette,
 	// then draw it onto the output at its size.
@@ -57,10 +62,10 @@ func (m Mosaic) Compose(p *ImagePalette) image.Image {
 			c := d.At(x, y)
 			t := p.AtColor(c)
 			rect := image.Rect(
-				x*p.ImgX,
-				y*p.ImgY,
-				(x+1)*p.ImgX,
-				(y+1)*p.ImgY,
+				x*m.ThumbX,
+				y*m.ThumbY,
+				(x+1)*m.ThumbX,
+				(y+1)*m.ThumbY,
 			)
 			//fmt.Printf("Draw %d,%d %v\n", x, y, rect)
 			draw.Draw(out, rect, t, image.ZP, draw.Src)

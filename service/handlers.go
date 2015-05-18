@@ -163,7 +163,7 @@ func generateMosaic(tag string, in image.Image, m *mosaicRecord) {
 
 	// First build a color palette.
 	log.Printf("Mosaic[%s] Create Palette...", m.ID)
-	p := mosaic.NewImagePalette(paletteSize, unitX, unitY)
+	p := mosaic.NewImagePalette(paletteSize)
 	if err := thumbs.PopulatePalette(tag, p); err != nil {
 		log.Printf("Failed to populate palette: %s", err)
 		if err := mosaics.SetStatus(m.ID, MosaicStatusFailed); err != nil {
@@ -181,7 +181,7 @@ func generateMosaic(tag string, in image.Image, m *mosaicRecord) {
 
 	// Generate the mosaic.
 	log.Printf("Mosaic[%s] Compose...", m.ID)
-	out := mosaic.Compose(in, units, units, p)
+	out := mosaic.Compose(in, units, units, unitX, unitY, p)
 	log.Printf("Mosaic[%s] Compose Done.", m.ID)
 
 	// Store the image and update the the mosaic is done.

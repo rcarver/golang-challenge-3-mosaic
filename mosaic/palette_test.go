@@ -9,7 +9,7 @@ import (
 )
 
 func TestNewImagePalette(t *testing.T) {
-	ip := NewImagePalette(256, 100, 100)
+	ip := NewImagePalette(256)
 	m := ip.AtColor(color.RGBA{0, 0, 255, 255})
 	if m != nil {
 		t.Fatalf("want nil image")
@@ -17,7 +17,7 @@ func TestNewImagePalette(t *testing.T) {
 }
 
 func TestNewSolidImagePalette(t *testing.T) {
-	ip := NewSolidPalette(palette.WebSafe, 100, 100)
+	ip := NewSolidPalette(palette.WebSafe)
 	blue := color.RGBA{0, 0, 255, 255}
 	m := ip.AtColor(blue)
 	if m == nil {
@@ -36,7 +36,7 @@ func solidImg(box image.Rectangle, c color.Color) image.Image {
 }
 
 func TestImagePalette_Add(t *testing.T) {
-	ip := NewImagePalette(3, 100, 100)
+	ip := NewImagePalette(3)
 	box := image.Rect(0, 0, 100, 100)
 
 	if ip.NumColors() != 0 {
@@ -73,7 +73,7 @@ func TestImagePalette_Add(t *testing.T) {
 }
 
 func TestImagePalette_AtColor(t *testing.T) {
-	ip := NewImagePalette(3, 100, 100)
+	ip := NewImagePalette(3)
 	box := image.Rect(0, 0, 100, 100)
 
 	// Fill the three color slots, then add more blues.
