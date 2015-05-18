@@ -16,9 +16,9 @@ log "Using tmp $dir"
 log "Fetching..."
 $mosaicly -run fetch -dir $dir -tag cat -num 5 
 log "Testing tag dir"
-test -d $dir/cat
+test -d $dir/thumbs/cat
 log "Testing files in tag dir"
-test 5 -eq $(ls $dir/cat/*.jpg | wc -l)
+test 5 -eq $(ls $dir/thumbs/cat/*.jpg | wc -l)
 
 log "Generating..."
 $mosaicly -run gen -dir $dir -tag cat -in fixtures/balloon.jpg -units 10 -out $dir/test.jpg

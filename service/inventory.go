@@ -19,7 +19,7 @@ const (
 
 var (
 	mosaicIDCounter = 0
-	imagesPerTag    = 400
+	ImagesPerTag    = 400
 )
 
 // Inventory of mosaics that have been created.
@@ -122,7 +122,7 @@ func (i *thumbInventory) AddTag(tag string) chan bool {
 	log.Printf("AddTag(%s) beginning fetch\n", tag)
 	go func() {
 		fetcher := instagram.NewTagFetcher(i.api, tag)
-		if err := inv.Fetch(fetcher, imagesPerTag); err != nil {
+		if err := inv.Fetch(fetcher, ImagesPerTag); err != nil {
 			log.Printf("Failed to fetch tag %s: %s", tag, err)
 		}
 		close(i.states[tag])

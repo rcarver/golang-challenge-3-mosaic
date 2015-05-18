@@ -44,19 +44,28 @@ var thumbs *thumbInventory
 // mosaics is the database of mosaics generated.
 var mosaics *mosaicInventory
 
-func Serve() {
-	thumbsCachePath := "./images/thumbs"
-	mosaicsCachePath := "./images/mosaics"
+var (
+	// HostPort is where the server runs.
+	HostPort = ":8080"
+	// MosaicsDir is where the server stores mosaics.
+	MosaicsDir = "./images/mosaics"
+	// ThumbsDir is where the server stores thumbs.
+	ThumbsDir = "./images/thumbs"
+)
 
-	if err := os.MkdirAll(mosaicsCachePath, 0755); err != nil {
-		log.Fatalf("Failed to create cache dir: %s\n", err)
+func Serve() {
+	if err := os.MkdirAll(MosaicsDir, 0755); err != nil {
+		log.Fatalf("Failed to create mosaics dir: %s\n", err)
+	}
+	if err := os.MkdirAll(ThumbsDir, 0755); err != nil {
+		log.Fatalf("Failed to create thumbs dir: %s\n", err)
 	}
 	mosaics = &mosaicInventory{
-		cache: mosaic.FileImageCache{mosaicsCachePath},
+		cache: mosaic.FileImageCache{MosaicsDir},
 	}
 	thumbs = &thumbInventory{
 		tagCacheFunc: func(tag string) mosaic.ImageCache {
-			path := path.Join(thumbsCachePath, tag)
+			path := path.Join(ThumbsDir, tag)
 			if err := os.MkdirAll(path, 0755); err != nil {
 				log.Fatalf("Failed to create cache dir: %s\n", err)
 			}
@@ -67,7 +76,7 @@ func Serve() {
 		states: make(map[string]chan bool),
 	}
 
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	log.Fatal(http.ListenAndServe(HostPort, nil))
 }
 
 // GET /mosaics

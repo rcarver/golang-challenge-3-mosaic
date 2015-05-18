@@ -4,11 +4,24 @@
 
 set -e
 
-endpoint="localhost:8080"
+# Write to stderr.
+log() {
+  echo "$@" 1>&2;
+}
+
+mosaicly=$GOPATH/bin/mosaicly
+dir=`mktemp -d -t mosaicly`
+
+port=8081
+endpoint="localhost:$port"
 tag="balloon"
 img="balloon.jpg"
 
-# Create a new mosaic
+log "Starting server..."
+$mosaicly -run serve -dir $dir -port $port -num 5 &
+sleep 1
+
+log "Create a new mosaic..."
 res="$(curl -fs -X POST -F img=@fixtures/${img} "$endpoint/mosaics?tag=${tag}")"
 echo $res
 id=$(echo $res | jq -M -r .id)
@@ -17,21 +30,22 @@ img_url=$(echo $res | jq -M -r .img)
 status=$(echo $res | jq -M -r .status)
 
 # Show the URL
-echo "new one id:$id status:$status at ${url}"
+log "New mosaic: id:$id status:$status at ${url}"
 
 # Wait for the image to be done.
 while [[ "$status" != "created" ]]; do
   status=$(curl -fs "${endpoint}${url}" | jq -M -r .status)
-  echo "waiting for mosaic..."
+  log "Waiting for mosaic..."
   sleep 1
 done;
 
-# Show the mosaics list.
-res=$(curl -fs "$endpoint/mosaics")
+log "All mosaics..."
+res=$(curl -fs "${endpoint}/mosaics")
 echo $res | jsonpretty
 
-# Open the image.
-echo "opening image..."
-curl -fs ${endpoint}${img_url} > /tmp/${img}
-open /tmp/${img}
+log "Opening image..."
+curl -fs ${endpoint}${img_url} > ${dir}/${img}
+open ${dir}/${img}
+
+killall mosaicly
 

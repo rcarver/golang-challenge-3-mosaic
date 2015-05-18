@@ -17,15 +17,16 @@ import (
 )
 
 var (
-	command    string
-	tag        string
-	tagDirName string
-	imgDirName string
-	inName     string
-	outName    string
-	units      int
-	numImages  int
-	solid      bool
+	command     string
+	tag         string
+	baseDirName string
+	imgDirName  string
+	inName      string
+	outName     string
+	units       int
+	numImages   int
+	solid       bool
+	port        int
 )
 
 var help = `
@@ -39,37 +40,44 @@ mosaic -run generate -dir images -tag balloon -in balloon.jpg -out balloon-mosai
 func init() {
 	flag.StringVar(&command, "run", "", "command to run: fetch | gen | serve")
 
-	// Download, Generate
-	flag.StringVar(&tag, "tag", "cat", "image tag to use")
-	flag.StringVar(&tagDirName, "dir", "./cache/thumbs", "dir to store images by tag")
+	// fetch, gen, serve
+	flag.StringVar(&baseDirName, "dir", "./cache/thumbs", "dir to store images by tag")
 
-	// Download
+	// fetch, gen
+	flag.StringVar(&tag, "tag", "cat", "image tag to use")
+
+	// fetch
 	flag.IntVar(&numImages, "num", 1000, "number of images to download")
 
-	// Generate
+	// gen
 	flag.StringVar(&inName, "in", "", "image file to read")
 	flag.StringVar(&outName, "out", "./mosaic.jpg", "image file to write")
 	flag.StringVar(&imgDirName, "imgdir", "", "dir to find images (uses tagdir + tag by default)")
+
+	// gen, serve
 	flag.IntVar(&units, "units", 40, "number of units wide to generate the mosaic")
 	flag.BoolVar(&solid, "solid", false, "generate a mosaic with solid colors, not images")
+
+	// serve
+	flag.IntVar(&port, "port", 8080, "port number of the server")
 }
 
 func main() {
 	flag.Parse()
 
-	// dir is imgDirName if set, or join(tagDirName, tag)
-	var dir string
+	// thumbsDir is imgDirName if set, or join(baseDirName, "thumbs", tag)
+	var thumbsDir string
 	if imgDirName != "" {
-		dir = imgDirName
+		thumbsDir = imgDirName
 	} else {
-		dir = path.Join(tagDirName, tag)
+		thumbsDir = path.Join(baseDirName, "thumbs", tag)
 	}
-	if err := os.MkdirAll(dir, 0755); err != nil {
+	if err := os.MkdirAll(thumbsDir, 0755); err != nil {
 		fmt.Printf("Error initializing: %s\n", err)
 	}
 
 	// inventory reads and writes from the dir.
-	inventory := newInventory(dir)
+	inventory := newInventory(thumbsDir)
 
 	switch command {
 	case "fetch":
@@ -119,6 +127,10 @@ func main() {
 
 		os.Exit(0)
 	case "serve":
+		service.HostPort = fmt.Sprintf(":%d", port)
+		service.MosaicsDir = path.Join(baseDirName, "mosaics")
+		service.ThumbsDir = path.Join(baseDirName, "thumbs")
+		service.ImagesPerTag = numImages
 		service.Serve()
 		os.Exit(0)
 	default:
