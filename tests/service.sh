@@ -1,4 +1,6 @@
 #!/bin/bash
+# This script tests the mosaicly API to fetch images and generate a mosaic.
+# It exits 0 on success. Any other exit is a failure.
 
 set -e
 
