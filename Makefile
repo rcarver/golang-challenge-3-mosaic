@@ -14,7 +14,7 @@ service_test:
 test: test_unit test_serve
 
 test_unit:
-	go test
+	go test ./...
 
 test_serve: 
 	$(MAKE) -j serve service_test
