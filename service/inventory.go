@@ -98,7 +98,7 @@ type tagCacheFunc func(string) mosaic.ImageCache
 // thumbInventory tracks the thumbnails that have been acquired.
 type thumbInventory struct {
 	tagCacheFunc
-	api *instagram.Client
+	api instagram.Client
 
 	mu     sync.Mutex
 	images map[string]*mosaic.ImageInventory

@@ -23,15 +23,26 @@ const (
 	instagramSecuret  = "ea785b48dd014eaeb4fd97c0a23d6ae5"
 )
 
+type Client interface {
+	// Popular calls the Instagram Popular API and returns the data.
+	Popular() (*MediaList, error)
+
+	// Search calls the Instagram Search API and returns the data.
+	Search(lat, lng string) (*MediaList, error)
+
+	// Tagged calls the Instagram Tagged API and returns the data.
+	Tagged(tag, maxTagID string) (*MediaList, error)
+}
+
 // Client makes requests to Instagram.
-type Client struct {
+type apiClient struct {
 	BaseURL string
 	URLSigner
 }
 
 // NewClient creates an initialized Client.
-func NewClient() *Client {
-	return &Client{
+func NewClient() Client {
+	return &apiClient{
 		BaseURL:   instagramURL,
 		URLSigner: clientSecretSigner{instagramClientID, instagramSecuret},
 	}
@@ -39,12 +50,6 @@ func NewClient() *Client {
 
 // MediaList is a result set containing media.
 type MediaList struct {
-	Media      []Media `json:"data"`
-	Pagination `json:"pagination"`
-}
-
-// Search is the result of a search query.
-type Search struct {
 	Media      []Media `json:"data"`
 	Pagination `json:"pagination"`
 }
@@ -117,8 +122,7 @@ func (r *Rep) Image() (image.Image, error) {
 	return jpeg.Decode(&buf)
 }
 
-// Popular calls the Instagram Popular API and returns the data.
-func (c Client) Popular() (*MediaList, error) {
+func (c apiClient) Popular() (*MediaList, error) {
 	var m MediaList
 	params := map[string]string{
 		"count": "100",
@@ -128,8 +132,7 @@ func (c Client) Popular() (*MediaList, error) {
 	return &m, err
 }
 
-// Search calls the Instagram Search API and returns the data.
-func (c Client) Search(lat, lng string) (*MediaList, error) {
+func (c apiClient) Search(lat, lng string) (*MediaList, error) {
 	var m MediaList
 	params := map[string]string{
 		"lat":   lat,
@@ -141,8 +144,7 @@ func (c Client) Search(lat, lng string) (*MediaList, error) {
 	return &m, err
 }
 
-// Tagged calls the Instagram Tagged API and returns the data.
-func (c Client) Tagged(tag, maxTagID string) (*MediaList, error) {
+func (c apiClient) Tagged(tag, maxTagID string) (*MediaList, error) {
 	var m MediaList
 	params := map[string]string{
 		"count":      "100",
@@ -154,17 +156,9 @@ func (c Client) Tagged(tag, maxTagID string) (*MediaList, error) {
 	return &m, err
 }
 
-// MediaList returns a MediaList from a URL. This can be used with pagination
-// NextURL to make repeated calls to an API.
-func (c Client) MediaList(url string) (*MediaList, error) {
-	var m MediaList
-	err := c.getJSON(url, &m)
-	return &m, err
-}
-
 // getJSON calls a URL and marshals the resulting JSON into the data struct. If
 // the response is anything but 200 an error is returned.
-func (c Client) getJSON(url string, data interface{}) error {
+func (c apiClient) getJSON(url string, data interface{}) error {
 	res, err := http.Get(url)
 	if err != nil {
 		return err
@@ -185,7 +179,7 @@ func (c Client) getJSON(url string, data interface{}) error {
 }
 
 // formatURL combines query parameters to an endpoint, then signs the URL.
-func (c Client) formatURL(endpoint string, params map[string]string) string {
+func (c apiClient) formatURL(endpoint string, params map[string]string) string {
 	u, err := url.Parse(fmt.Sprintf(c.BaseURL, endpoint))
 	if err != nil {
 		panic("failed to parse instagram base url")

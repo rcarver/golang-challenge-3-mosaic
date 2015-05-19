@@ -9,12 +9,12 @@ type Fetcher interface {
 }
 
 type tagFetcher struct {
-	client *Client
+	client Client
 	tag    string
 }
 
 // NewTagFetcher gives you a Fetcher that pulls images for a tag.
-func NewTagFetcher(c *Client, t string) Fetcher {
+func NewTagFetcher(c Client, t string) Fetcher {
 	return &tagFetcher{c, t}
 }
 
@@ -23,10 +23,9 @@ func (f tagFetcher) Fetch() (chan *Media, chan struct{}) {
 	done := make(chan struct{})
 	var maxID string
 	go func() {
-		defer close(ch)
 		for {
 			res, err := f.client.Tagged(f.tag, maxID)
-			if err != nil {
+			if err != nil || res == nil {
 				return
 			}
 			for _, m := range res.Media {
