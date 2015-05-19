@@ -17,42 +17,46 @@ import (
 	"strings"
 )
 
-var INSTAGRAM_URL = "https://api.instagram.com/v1%s"
-var INSTAGRAM_CLIENT_ID = "6b2ea4cc0093441fb38990045a855e2a"
-var INSTAGRAM_SECRET = "ea785b48dd014eaeb4fd97c0a23d6ae5"
+const (
+	instagramURL      = "https://api.instagram.com/v1%s"
+	instagramClientID = "6b2ea4cc0093441fb38990045a855e2a"
+	instagramSecuret  = "ea785b48dd014eaeb4fd97c0a23d6ae5"
+)
 
 // Client makes requests to Instagram.
 type Client struct {
 	BaseURL string
-	UrlSigner
+	URLSigner
 }
 
 // NewClient creates an initialized Client.
 func NewClient() *Client {
 	return &Client{
-		BaseURL:   INSTAGRAM_URL,
-		UrlSigner: clientSecretSigner{INSTAGRAM_CLIENT_ID, INSTAGRAM_SECRET},
+		BaseURL:   instagramURL,
+		URLSigner: clientSecretSigner{instagramClientID, instagramSecuret},
 	}
 }
 
+// MediaList is a result set containing media.
 type MediaList struct {
 	Media      []Media `json:"data"`
 	Pagination `json:"pagination"`
 }
 
+// Search is the result of a search query.
 type Search struct {
 	Media      []Media `json:"data"`
 	Pagination `json:"pagination"`
 }
 
+// Pagination provides details for getting the next set of records.
 type Pagination struct {
 	NextURL  string `json:"next_url"`
 	MaxTagID string `json:"next_max_tag_id"`
 }
 
-// media is either a photo or video. If it's a video, it has both
-// Images and Videos representations. If it's a photo, it only has Images
-// representations.
+// Media is either a photo or video. If it's a video, it has both Images and
+// Videos representations. If it's a photo, it only has Images representations.
 type Media struct {
 	Type   string          `json:"type"`
 	Images map[string]*Rep `json:"images"`
@@ -138,11 +142,11 @@ func (c Client) Search(lat, lng string) (*MediaList, error) {
 }
 
 // Tagged calls the Instagram Tagged API and returns the data.
-func (c Client) Tagged(tag, maxTagId string) (*MediaList, error) {
+func (c Client) Tagged(tag, maxTagID string) (*MediaList, error) {
 	var m MediaList
 	params := map[string]string{
 		"count":      "100",
-		"max_tag_id": maxTagId,
+		"max_tag_id": maxTagID,
 	}
 	endpoint := fmt.Sprintf("/tags/%s/media/recent", tag)
 	url := c.formatURL(endpoint, params)
@@ -193,27 +197,27 @@ func (c Client) formatURL(endpoint string, params map[string]string) string {
 	}
 
 	// Sign the URL.
-	c.UrlSigner.Sign(endpoint, &q)
+	c.URLSigner.Sign(endpoint, &q)
 
 	// Set new query string and stringify.
 	u.RawQuery = q.Encode()
 	return u.String()
 }
 
-// UrlSigner is the interface for things that modify a query string for
+// URLSigner is the interface for things that modify a query string for
 // security purposes.
-type UrlSigner interface {
+type URLSigner interface {
 	Sign(endpoint string, queryString *url.Values)
 }
 
-// clientSecretSigner implements UrlSigner, it adds the client_id and sig
+// clientSecretSigner implements URLSigner, it adds the client_id and sig
 // params to a query string.
 type clientSecretSigner struct {
 	ClientID string
 	Secret   string
 }
 
-// Sign implements UrlSigner.
+// Sign implements URLSigner.
 func (s clientSecretSigner) Sign(endpoint string, q *url.Values) {
 	q.Set("client_id", s.ClientID)
 	q.Set("sig", sig(s.Secret, endpoint, *q))
@@ -228,7 +232,7 @@ func sig(secret, endpoint string, params url.Values) string {
 
 	// Get the sorted keys.
 	keys := make([]string, 0, len(params))
-	for k, _ := range params {
+	for k := range params {
 		keys = append(keys, k)
 	}
 	sort.Sort(sort.StringSlice(keys))
