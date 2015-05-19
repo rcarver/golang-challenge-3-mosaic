@@ -123,11 +123,13 @@ func NewFileImageCache(dir string) *FileImageCache {
 	return &FileImageCache{dir}
 }
 
+// Key implements ImageCacheKey
 func (c FileImageCache) Key(name string) ImageCacheKey {
 	k := sha1.Sum([]byte(name))
 	return ImageCacheKey(hex.EncodeToString(k[:]))
 }
 
+// Put implements ImageCacheKey
 func (c FileImageCache) Put(key ImageCacheKey, m image.Image) error {
 	fo, err := os.Create(c.keyToPath(key))
 	if err != nil {
@@ -140,6 +142,7 @@ func (c FileImageCache) Put(key ImageCacheKey, m image.Image) error {
 	return nil
 }
 
+// Get implements ImageCacheKey
 func (c FileImageCache) Get(key ImageCacheKey) (image.Image, error) {
 	fi, err := os.Open(c.keyToPath(key))
 	if err != nil {
@@ -153,6 +156,7 @@ func (c FileImageCache) Get(key ImageCacheKey) (image.Image, error) {
 	return m, nil
 }
 
+// Keys implements ImageCacheKey
 func (c FileImageCache) Keys() ([]ImageCacheKey, error) {
 	list, err := filepath.Glob(path.Join(c.Dir, "*.jpg"))
 	if err != nil {
@@ -165,6 +169,7 @@ func (c FileImageCache) Keys() ([]ImageCacheKey, error) {
 	return keys, nil
 }
 
+// Size implements ImageCacheKey
 func (c FileImageCache) Size() int {
 	list, err := c.Keys()
 	if err == nil {
@@ -173,6 +178,7 @@ func (c FileImageCache) Size() int {
 	return 0
 }
 
+// Has implements ImageCacheKey
 func (c FileImageCache) Has(key ImageCacheKey) bool {
 	if _, err := os.Stat(c.keyToPath(key)); os.IsNotExist(err) {
 		return false

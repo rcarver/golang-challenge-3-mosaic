@@ -57,8 +57,8 @@ func (m Mosaic) Compose(p *ImagePalette) image.Image {
 
 	// Iterate over the dither pattern and pull an image from the palette,
 	// then draw it onto the output at its size.
-	for y := db.Min.Y; y < db.Max.Y; y += 1 {
-		for x := db.Min.X; x < db.Max.X; x += 1 {
+	for y := db.Min.Y; y < db.Max.Y; y++ {
+		for x := db.Min.X; x < db.Max.X; x++ {
 			c := d.At(x, y)
 			t := p.AtColor(c)
 			rect := image.Rect(

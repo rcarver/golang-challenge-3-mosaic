@@ -11,15 +11,20 @@ import (
 )
 
 const (
-	MosaicStatusNew     = "new"
+	// MosaicStatusNew is a mosaic that has been stored but not worked on.
+	MosaicStatusNew = "new"
+	// MosaicStatusWorking is a mosaic that is being generated.
 	MosaicStatusWorking = "working"
-	MosaicStatusFailed  = "failed"
+	// MosaicStatusFailed is a mosaic that failed to be generated.
+	MosaicStatusFailed = "failed"
+	// MosaicStatusCreated is a mosaic that was generated.
 	MosaicStatusCreated = "created"
 )
 
 var (
+	// ImagesPerTag is how many images to download when populating a tag.
+	ImagesPerTag    = 1000
 	mosaicIDCounter = 0
-	ImagesPerTag    = 400
 )
 
 // Inventory of mosaics that have been created.

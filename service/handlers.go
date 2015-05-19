@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"image"
 	"image/jpeg"
+	// To encode/decode png
 	_ "image/png"
 	"log"
 	"net/http"
@@ -53,6 +54,8 @@ var (
 	ThumbsDir = "./images/thumbs"
 )
 
+// Serve starts up a server. It initializes thumb and mosaic on-disk storage
+// and blocks waiting for requests.
 func Serve() {
 	if err := os.MkdirAll(MosaicsDir, 0755); err != nil {
 		log.Fatalf("Failed to create mosaics dir: %s\n", err)
@@ -122,6 +125,7 @@ func handleListMosaics(w http.ResponseWriter, r *http.Request) {
 // Create a new mosaic.
 
 var (
+	// Units is how many mosaic units to use for width and height.
 	Units       = 40
 	unitX       = 150
 	unitY       = 150
