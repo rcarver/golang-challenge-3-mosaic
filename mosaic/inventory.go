@@ -101,36 +101,39 @@ type ImageCacheKey string
 type ImageCache interface {
 	// Key returns a consistent cache key from string.
 	Key(name string) ImageCacheKey
+
 	// Put stores an image in the cache by key.
 	Put(ImageCacheKey, image.Image) error
+
 	// Get returns an image in the cache by key
 	Get(ImageCacheKey) (image.Image, error)
+
 	// Has returns true if an image exists at key.
 	Has(ImageCacheKey) bool
+
 	// Keys returns a list of the stored keys, unordered.
 	Keys() ([]ImageCacheKey, error)
+
 	// Size returns the number of images stores.
 	Size() int
 }
 
-// FileImageCache implements an ImageCache on the filesystem.
-type FileImageCache struct {
+// fileImageCache implements an ImageCache on the filesystem.
+type fileImageCache struct {
 	Dir string
 }
 
 // NewFileImageCache initializes a new cache to store images on the filesystem.
-func NewFileImageCache(dir string) *FileImageCache {
-	return &FileImageCache{dir}
+func NewFileImageCache(dir string) ImageCache {
+	return &fileImageCache{dir}
 }
 
-// Key implements ImageCacheKey
-func (c FileImageCache) Key(name string) ImageCacheKey {
+func (c fileImageCache) Key(name string) ImageCacheKey {
 	k := sha1.Sum([]byte(name))
 	return ImageCacheKey(hex.EncodeToString(k[:]))
 }
 
-// Put implements ImageCacheKey
-func (c FileImageCache) Put(key ImageCacheKey, m image.Image) error {
+func (c fileImageCache) Put(key ImageCacheKey, m image.Image) error {
 	fo, err := os.Create(c.keyToPath(key))
 	if err != nil {
 		return err
@@ -142,8 +145,7 @@ func (c FileImageCache) Put(key ImageCacheKey, m image.Image) error {
 	return nil
 }
 
-// Get implements ImageCacheKey
-func (c FileImageCache) Get(key ImageCacheKey) (image.Image, error) {
+func (c fileImageCache) Get(key ImageCacheKey) (image.Image, error) {
 	fi, err := os.Open(c.keyToPath(key))
 	if err != nil {
 		return nil, err
@@ -156,8 +158,7 @@ func (c FileImageCache) Get(key ImageCacheKey) (image.Image, error) {
 	return m, nil
 }
 
-// Keys implements ImageCacheKey
-func (c FileImageCache) Keys() ([]ImageCacheKey, error) {
+func (c fileImageCache) Keys() ([]ImageCacheKey, error) {
 	list, err := filepath.Glob(path.Join(c.Dir, "*.jpg"))
 	if err != nil {
 		return []ImageCacheKey{}, err
@@ -169,8 +170,7 @@ func (c FileImageCache) Keys() ([]ImageCacheKey, error) {
 	return keys, nil
 }
 
-// Size implements ImageCacheKey
-func (c FileImageCache) Size() int {
+func (c fileImageCache) Size() int {
 	list, err := c.Keys()
 	if err == nil {
 		return len(list)
@@ -178,18 +178,17 @@ func (c FileImageCache) Size() int {
 	return 0
 }
 
-// Has implements ImageCacheKey
-func (c FileImageCache) Has(key ImageCacheKey) bool {
+func (c fileImageCache) Has(key ImageCacheKey) bool {
 	if _, err := os.Stat(c.keyToPath(key)); os.IsNotExist(err) {
 		return false
 	}
 	return true
 }
 
-func (c FileImageCache) keyToPath(key ImageCacheKey) string {
+func (c fileImageCache) keyToPath(key ImageCacheKey) string {
 	return fmt.Sprintf("%s/%s.jpg", c.Dir, key)
 }
 
-func (c FileImageCache) pathToKey(path string) ImageCacheKey {
+func (c fileImageCache) pathToKey(path string) ImageCacheKey {
 	return ImageCacheKey(strings.Trim(filepath.Base(path), filepath.Ext(path)))
 }
