@@ -66,7 +66,6 @@ func (ii *ImageInventory) Fetch(fetcher instagram.Fetcher, max int) error {
 			if size >= max {
 				return nil
 			}
-
 		}
 	}
 }
@@ -85,7 +84,7 @@ func (ii *ImageInventory) cacheImage(media instagram.Media) error {
 	}
 	img, err := res.Image()
 	if err != nil {
-		return nil
+		return err
 	}
 	//log.Printf("Get %s\n", res.URL)
 	if err := ii.cache.Put(key, img); err != nil {

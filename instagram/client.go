@@ -94,6 +94,32 @@ type Rep struct {
 	code    int
 }
 
+type nopCloser struct {
+	io.Reader
+}
+
+func (nopCloser) Close() error { return nil }
+
+// NewFakeRep initializes a Rep with a URL and a fake image. This allows you to
+// fake a Rep without hitting the network.
+func NewFakeRep(url string) *Rep {
+	m := image.NewRGBA(image.Rect(0, 0, 100, 100))
+	imageData := bytes.NewBuffer([]byte{})
+	jpeg.Encode(imageData, m, nil)
+	return NewFakeRepWithImage(url, imageData)
+}
+
+// NewFakeRepWithImage initializes a Rep with a URL and image data. This allows
+// you to fake a Rep without hitting the network, while using a real image.
+func NewFakeRepWithImage(url string, imageData io.Reader) *Rep {
+	return &Rep{
+		URL:     url,
+		fetched: true,
+		code:    http.StatusOK,
+		body:    nopCloser{imageData},
+	}
+}
+
 // Read implements io.Reader to fetch the JPG data.
 func (r *Rep) Read(p []byte) (int, error) {
 	if !r.fetched {
