@@ -25,3 +25,10 @@ lint:
 	go fmt ./...
 	go vet ./...
 	$$GOPATH/bin/golint ./...
+
+cov:
+	go test -coverprofile=mosaic.coverage.out ./mosaic
+	go test -coverprofile=instagram.coverage.out ./instagram
+	go tool cover -html=mosaic.coverage.out
+	go tool cover -html=instagram.coverage.out
+
