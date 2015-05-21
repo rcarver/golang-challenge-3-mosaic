@@ -87,11 +87,6 @@ func (p *ImagePalette) AtColor(c color.Color) image.Image {
 	return nil
 }
 
-// Size returns the number of colors in the palette.
-func (p *ImagePalette) Size() int {
-	return len(p.Palette)
-}
-
 // NumColors returns the number of colors in the palette.
 func (p *ImagePalette) NumColors() int {
 	return len(p.Palette)

@@ -184,7 +184,7 @@ func generateMosaic(tag string, in image.Image, m *mosaicRecord) {
 		}
 		return
 	}
-	log.Printf("Mosaic[%s] Create Palette Done with %d colors, %d images.", m.ID, p.Size(), p.NumImages())
+	log.Printf("Mosaic[%s] Create Palette Done with %d colors, %d images.", m.ID, p.NumColors(), p.NumImages())
 
 	// Update that the mosaic is being worked on.
 	if err := mosaics.SetStatus(m.ID, MosaicStatusWorking); err != nil {
