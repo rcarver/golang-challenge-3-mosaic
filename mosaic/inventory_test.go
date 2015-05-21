@@ -9,7 +9,8 @@ import (
 )
 
 type fakeCache struct {
-	store map[ImageCacheKey]image.Image
+	store      map[ImageCacheKey]image.Image
+	errorOnGet ImageCacheKey
 }
 
 func (c *fakeCache) Key(name string) ImageCacheKey {
@@ -20,6 +21,9 @@ func (c *fakeCache) Put(k ImageCacheKey, m image.Image) error {
 	return nil
 }
 func (c *fakeCache) Get(k ImageCacheKey) (image.Image, error) {
+	if c.errorOnGet == k {
+		return nil, fmt.Errorf("error by errorOnGet %s", c.errorOnGet)
+	}
 	if m, ok := c.store[k]; ok {
 		return m, nil
 	}
@@ -66,7 +70,7 @@ func fakeThumbnailMedia(url string) *instagram.Media {
 
 func TestImageInventory_Fetch(t *testing.T) {
 	c := &fakeCache{
-		make(map[ImageCacheKey]image.Image),
+		store: make(map[ImageCacheKey]image.Image),
 	}
 	i := &ImageInventory{c}
 	f := &fakeFetcher{
@@ -90,6 +94,25 @@ func TestImageInventory_Fetch(t *testing.T) {
 	}
 	if c.Has("/3") {
 		t.Errorf("don't want /3")
+	}
+}
+
+func TestImageInventory_PopulatePalette(t *testing.T) {
+	c := &fakeCache{
+		store: make(map[ImageCacheKey]image.Image),
+	}
+	i := &ImageInventory{c}
+	c.Put(ImageCacheKey("a"), image.NewRGBA(image.Rect(0, 0, 100, 100)))
+	c.Put(ImageCacheKey("b"), image.NewRGBA(image.Rect(0, 0, 100, 100)))
+	c.Put(ImageCacheKey("c"), image.NewRGBA(image.Rect(0, 0, 100, 100)))
+	// Error on "b" to show that we keep going on error.
+	c.errorOnGet = ImageCacheKey("b")
+	p := NewImagePalette(5)
+	if err := i.PopulatePalette(p); err != nil {
+		t.Fatalf("PopulatePalette got error %s", err)
+	}
+	if got, want := p.NumImages(), 2; got != want {
+		t.Errorf("NumImages got %d, want %d", got, want)
 	}
 }
 
