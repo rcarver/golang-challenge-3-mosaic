@@ -33,9 +33,8 @@ func (c *fakeClient) Tagged(tag string, maxID string) (*MediaList, error) {
 		list := c.mediaLists[c.mediaListIndex]
 		c.mediaListIndex++
 		return list, nil
-	} else {
-		return nil, fmt.Errorf("no more data")
 	}
+	return nil, fmt.Errorf("no more data")
 }
 
 func Test_tagFetcher_Fetch(t *testing.T) {
@@ -67,7 +66,7 @@ func Test_tagFetcher_Fetch(t *testing.T) {
 	ch, done := f.Fetch()
 
 	var m *Media
-	media := make([]*Media, 0)
+	var media []*Media
 
 	go func() {
 		for {
