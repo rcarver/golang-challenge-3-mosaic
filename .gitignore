@@ -3,3 +3,4 @@ golang-challenge-3-mosaic
 *.jpg
 cache
 images
+*.coverage.out
