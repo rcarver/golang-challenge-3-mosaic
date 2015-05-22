@@ -26,9 +26,15 @@ lint:
 	go vet ./...
 	$$GOPATH/bin/golint ./...
 
-cov:
-	go test -coverprofile=mosaic.coverage.out ./mosaic
-	go test -coverprofile=instagram.coverage.out ./instagram
-	go tool cover -html=mosaic.coverage.out
-	go tool cover -html=instagram.coverage.out
+cov_packages=mosaic instagram
+cov_files=$(addsuffix .coverage.out,$(cov_packages))
+
+cov: clean_cov $(cov_files)
+
+clean_cov: 
+	rm -f $(cov_files)
+
+%.coverage.out:
+	go test -coverprofile=$@ ./$(firstword $(subst ., ,$@))
+	go tool cover -html=$<
 
