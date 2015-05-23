@@ -1,5 +1,22 @@
 # golang challenge 3
 
+Instructions for running.
+
+    # Fetch images from Instagram.
+    mosaicly fetch -tag cat -num 1000
+
+    # Generate a mosaic from cat photos
+    mosaicly gen -tag cat -in photo.jpg -out mosaic.jpg
+
+    # Or generate a mosaic using images in any directory
+    mosaicly gen -imgdir ~/Pictures -in photo.jpg -out mosaic.jpg
+
+Advanced options:
+
+    -units    - change how many mosaic tiles are used
+    -unitSize - set how big the mosaic tiles are
+    -shrink   - how much to reduce the the final image, as a percent
+
 This is an official entry.
 
 * [Challenge](http://golang-challenge.com/go-challenge3/)
