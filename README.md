@@ -17,6 +17,19 @@ Advanced options:
     -unitSize - set how big the mosaic tiles are
     -shrink   - how much to reduce the the final image, as a percent
 
+Running tests:
+
+    # Unit tests
+    go test ./...
+
+    # Integration test the command line client
+    ./tests/cli.sh
+
+    # Integration test the JSON API
+    ./tests/service.sh
+
+---
+
 This is an official entry.
 
 * [Challenge](http://golang-challenge.com/go-challenge3/)
