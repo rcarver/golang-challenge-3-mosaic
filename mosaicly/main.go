@@ -26,7 +26,7 @@ var (
 	inName      string
 	outName     string
 	units       int
-	thumbSize   int
+	unitSize    int
 	numImages   int
 	solid       bool
 	port        int
@@ -53,14 +53,14 @@ func init() {
 	gen.StringVar(&outName, "out", "./mosaic.jpg", "image file to write")
 	gen.StringVar(&imgDirName, "imgdir", "", "dir to find images (uses $dir/thumbs/$tag by default)")
 	gen.IntVar(&units, "units", 40, "number of units wide to generate the mosaic")
-	gen.IntVar(&thumbSize, "unitSize", instagram.ThumbnailSize, "pixels w/h of the thumbnail images")
+	gen.IntVar(&unitSize, "unitSize", instagram.ThumbnailSize, "pixels w/h of the thumbnail images")
 	gen.BoolVar(&solid, "solid", false, "generate a mosaic with solid colors, not images")
 
 	serve = flag.NewFlagSet("serve", flag.ExitOnError)
 	serve.StringVar(&baseDirName, "dir", "./cache", "dir to store thumbs and mosaics")
 	serve.IntVar(&numImages, "num", 1000, "number of images to download")
 	serve.IntVar(&units, "units", 40, "number of units wide to generate the mosaic")
-	serve.IntVar(&thumbSize, "unitSize", instagram.ThumbnailSize, "pixels w/h of the thumbnail images")
+	serve.IntVar(&unitSize, "unitSize", instagram.ThumbnailSize, "pixels w/h of the thumbnail images")
 	serve.IntVar(&port, "port", 8080, "port number of the server")
 }
 
@@ -156,6 +156,7 @@ func main() {
 		service.ThumbsDir = path.Join(baseDirName, "thumbs")
 		service.ImagesPerTag = numImages
 		service.Units = units
+		service.UnitSize = unitSize
 		service.Serve()
 		os.Exit(0)
 	default:
@@ -199,5 +200,5 @@ func generateMosaic(src image.Image, tag string, units int, solid bool, inv *mos
 		}
 		log.Printf("Generating %dx%d %s mosaic with %d colors and %d images\n", units, units, tag, p.NumColors(), p.NumImages())
 	}
-	return mosaic.ComposeSquare(src, units, thumbSize, p), nil
+	return mosaic.ComposeSquare(src, units, unitSize, p), nil
 }

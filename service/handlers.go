@@ -126,9 +126,9 @@ func handleListMosaics(w http.ResponseWriter, r *http.Request) {
 
 var (
 	// Units is how many mosaic units to use for width and height.
-	Units       = 40
-	unitX       = 150
-	unitY       = 150
+	Units = 40
+	// UnitSize is how big the thumbnail images are, width and height.
+	UnitSize    = 150
 	paletteSize = 256
 )
 
@@ -194,7 +194,7 @@ func generateMosaic(tag string, in image.Image, m *mosaicRecord) {
 
 	// Generate the mosaic.
 	log.Printf("Mosaic[%s] Compose...", m.ID)
-	out := mosaic.Compose(in, Units, Units, unitX, unitY, p)
+	out := mosaic.ComposeSquare(in, Units, UnitSize, p)
 	log.Printf("Mosaic[%s] Compose Done.", m.ID)
 
 	// Store the image and update the the mosaic is done.
