@@ -79,7 +79,7 @@ func (ii *ImageInventory) cacheImage(media instagram.Media) error {
 	rep := media.ThumbnailImage()
 	key := ii.cache.Key(rep.URL)
 	if ii.cache.Has(key) {
-		log.Printf("Has %s\n", rep.URL)
+		//log.Printf("Has %s\n", rep.URL)
 		return nil
 	}
 	img, err := rep.Image()
@@ -87,7 +87,7 @@ func (ii *ImageInventory) cacheImage(media instagram.Media) error {
 		log.Printf("Error getting Image %s\n", err)
 		return err
 	}
-	log.Printf("Get %s\n", rep.URL)
+	//log.Printf("Get %s\n", rep.URL)
 	if err := ii.cache.Put(key, img); err != nil {
 		return err
 	}

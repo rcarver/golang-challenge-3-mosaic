@@ -86,7 +86,7 @@ func Test_tagFetcher_Fetch(t *testing.T) {
 		t.Errorf("got %d records, want %d", got, want)
 	}
 	if got, want := len(c.taggedCalls), 2; got != want {
-		t.Errorf("got %d calls, want %d", got, want)
+		t.Errorf("got %d calls, want %d. %#v", got, want, c.taggedCalls)
 	}
 	if got, want := c.taggedCalls[0].MaxID, ""; got != want {
 		t.Errorf("calls 0, want %s, got %s", got, want)
