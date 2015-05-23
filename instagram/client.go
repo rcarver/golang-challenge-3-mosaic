@@ -23,6 +23,11 @@ const (
 	instagramSecuret  = "ea785b48dd014eaeb4fd97c0a23d6ae5"
 )
 
+const (
+	// ThumbnailSize is the width/height of the ThumbnailImage representation.
+	ThumbnailSize = 150
+)
+
 // Client is what talks to the Instagram API.
 type Client interface {
 	// Popular calls the Instagram Popular API and returns the data.

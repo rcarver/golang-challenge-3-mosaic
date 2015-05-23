@@ -4,8 +4,17 @@ import (
 	"image"
 	"image/color"
 	"image/draw"
+	"log"
 	"math"
 )
+
+// ComposeSquare returns a new composite mosaic image from the input source. It
+// operates simply on square images and square thumbnails.
+func ComposeSquare(in image.Image, units, thumbSize int, p *ImagePalette) image.Image {
+	sq := cropSquare(in)
+	m := Mosaic{units, units, thumbSize, thumbSize, sq}
+	return m.Compose(p)
+}
 
 // Compose returns a new composite mosaic image from the input source. The output
 // image size is determined by the number of units and the size of images in
@@ -71,6 +80,15 @@ func (m Mosaic) Compose(p *ImagePalette) image.Image {
 			draw.Draw(out, rect, t, image.ZP, draw.Src)
 		}
 	}
+	return out
+}
+
+func cropSquare(in image.Image) image.Image {
+	x, y := in.Bounds().Dx(), in.Bounds().Dy()
+	max := int(math.Min(float64(x), float64(y)))
+	log.Printf("crop: input %dx%d, output %dx%d", x, y, max, max)
+	out := image.NewRGBA(image.Rect(0, 0, max, max))
+	draw.Draw(out, out.Bounds(), in, image.ZP, draw.Over)
 	return out
 }
 
