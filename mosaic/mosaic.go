@@ -24,6 +24,14 @@ func Compose(in image.Image, ux, uy, tx, ty int, p *ImagePalette) image.Image {
 	return m.Compose(p)
 }
 
+// Shrink is a quick way to reduce an image by a percentage.
+func Shrink(in image.Image, factor float64) image.Image {
+	bx, by := in.Bounds().Dx(), in.Bounds().Dy()
+	x, y := int(float64(bx)*factor), int(float64(by)*factor)
+	log.Printf("Shrink: input %dx%d, output %dx%d", bx, by, x, y)
+	return downsample(in, x, y, 0.25, 0.0)
+}
+
 // samplePixels is the percentage of pixels are sampled to find the average color.
 var samplePixels = .5
 
@@ -86,7 +94,7 @@ func (m Mosaic) Compose(p *ImagePalette) image.Image {
 func cropSquare(in image.Image) image.Image {
 	x, y := in.Bounds().Dx(), in.Bounds().Dy()
 	max := int(math.Min(float64(x), float64(y)))
-	log.Printf("crop: input %dx%d, output %dx%d", x, y, max, max)
+	log.Printf("CropSquare: input %dx%d, output %dx%d", x, y, max, max)
 	out := image.NewRGBA(image.Rect(0, 0, max, max))
 	draw.Draw(out, out.Bounds(), in, image.ZP, draw.Over)
 	return out

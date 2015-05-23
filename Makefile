@@ -1,6 +1,11 @@
 build:
 	go install github.com/rcarver/golang-challenge-3-mosaic/mosaicly
 
+sample.jpg: build
+	$$GOPATH/bin/mosaicly fetch -tag balloon -num 2000
+	$$GOPATH/bin/mosaicly gen -tag balloon -in fixtures/balloon-square.jpg -out $@
+	test -f $@ && open $@
+
 gen: build
 	rm -f output.jpg
 	$$GOPATH/bin/mosaicly fetch -tag balloon

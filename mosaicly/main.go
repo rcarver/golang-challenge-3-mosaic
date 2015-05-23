@@ -17,19 +17,20 @@ import (
 )
 
 var (
-	fetch       *flag.FlagSet
-	gen         *flag.FlagSet
-	serve       *flag.FlagSet
-	tag         string
-	baseDirName string
-	imgDirName  string
-	inName      string
-	outName     string
-	units       int
-	unitSize    int
-	numImages   int
-	solid       bool
-	port        int
+	fetch         *flag.FlagSet
+	gen           *flag.FlagSet
+	serve         *flag.FlagSet
+	tag           string
+	baseDirName   string
+	imgDirName    string
+	inName        string
+	outName       string
+	outDownsample float64
+	units         int
+	unitSize      int
+	numImages     int
+	solid         bool
+	port          int
 )
 
 var help = `
@@ -51,6 +52,7 @@ func init() {
 	gen.StringVar(&tag, "tag", "cat", "image tag to use")
 	gen.StringVar(&inName, "in", "", "image file to read")
 	gen.StringVar(&outName, "out", "./mosaic.jpg", "image file to write")
+	gen.Float64Var(&outDownsample, "shrink", 0.5, "perentage to shrink the output image as a percentage 0-1")
 	gen.StringVar(&imgDirName, "imgdir", "", "dir to find images (uses $dir/thumbs/$tag by default)")
 	gen.IntVar(&units, "units", 40, "number of units wide to generate the mosaic")
 	gen.IntVar(&unitSize, "unitSize", instagram.ThumbnailSize, "pixels w/h of the thumbnail images")
@@ -200,5 +202,6 @@ func generateMosaic(src image.Image, tag string, units int, solid bool, inv *mos
 		}
 		log.Printf("Generating %dx%d %s mosaic with %d colors and %d images\n", units, units, tag, p.NumColors(), p.NumImages())
 	}
-	return mosaic.ComposeSquare(src, units, unitSize, p), nil
+	sq := mosaic.ComposeSquare(src, units, unitSize, p)
+	return mosaic.Shrink(sq, outDownsample), nil
 }
