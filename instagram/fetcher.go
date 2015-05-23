@@ -1,5 +1,7 @@
 package instagram
 
+import "errors"
+
 // The Fetcher interface fetches media objects.
 type Fetcher interface {
 	// Fetch returns two channels. The first channel receives media
@@ -29,9 +31,15 @@ func (f tagFetcher) Fetch() (chan *Media, chan struct{}) {
 				return
 			}
 			for _, m := range res.Media {
-				select {
-				case ch <- &m:
-				case <-done:
+				err := func(m Media) error {
+					select {
+					case ch <- &m:
+					case <-done:
+						return errors.New("abort")
+					}
+					return nil
+				}(m)
+				if err != nil {
 					return
 				}
 			}
