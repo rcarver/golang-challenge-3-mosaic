@@ -7,6 +7,45 @@ import (
 	"testing"
 )
 
+func TestComposeSquare(t *testing.T) {
+	// Non-square image becomes square.
+	in := image.NewRGBA(image.Rect(0, 0, 100, 200))
+	pal := NewSolidPalette(palette.WebSafe)
+	// Output bounds are units * unit size in both dimensions.
+	m := ComposeSquare(in, 10, 75, pal)
+	if got, want := m.Bounds().Dx(), 750; got != want {
+		t.Errorf("Dx got %d, want %d", got, want)
+	}
+	if got, want := m.Bounds().Dy(), 750; got != want {
+		t.Errorf("Dy got %d, want %d", got, want)
+	}
+}
+
+func TestCompose(t *testing.T) {
+	// Non-square image bounds have unspecified behavior right now.
+	in := image.NewRGBA(image.Rect(0, 0, 100, 200))
+	pal := NewSolidPalette(palette.WebSafe)
+	// Output bounds are units * unit size in both dimensions.
+	m := Compose(in, 10, 20, 35, 55, pal)
+	if got, want := m.Bounds().Dx(), 350; got != want {
+		t.Errorf("Dx got %d, want %d", got, want)
+	}
+	if got, want := m.Bounds().Dy(), 1100; got != want {
+		t.Errorf("Dy got %d, want %d", got, want)
+	}
+}
+
+func TestShrink(t *testing.T) {
+	in := image.NewRGBA(image.Rect(0, 0, 100, 500))
+	out := Shrink(in, .5)
+	if got, want := out.Bounds().Dx(), 50; got != want {
+		t.Errorf("Dx got %d, want %d", got, want)
+	}
+	if got, want := out.Bounds().Dy(), 250; got != want {
+		t.Errorf("Dy got %d, want %d", got, want)
+	}
+}
+
 func TestMosiac_Dither(t *testing.T) {
 	in := solidImg(image.Rect(0, 0, 100, 100), color.White)
 	mos := Mosaic{UnitsX: 10, UnitsY: 10, img: in}
