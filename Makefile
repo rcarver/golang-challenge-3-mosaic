@@ -1,10 +1,11 @@
+# Build
+
 build:
 	go install github.com/rcarver/golang-challenge-3-mosaic/mosaicly
 
-sample.jpg: build
-	$$GOPATH/bin/mosaicly fetch -tag balloon -num 2000
-	$$GOPATH/bin/mosaicly gen -tag balloon -in fixtures/balloon-square.jpg -out $@
-	test -f $@ && open $@
+.PHONY: build
+
+# Use
 
 gen: build
 	rm -f output.jpg
@@ -14,6 +15,26 @@ gen: build
 
 serve: build
 	$$GOPATH/bin/mosaicly serve
+
+.PHONY: gen serve
+
+# Sample
+
+sample.jpg: build
+	$$GOPATH/bin/mosaicly fetch -tag balloon -num 2000
+	$$GOPATH/bin/mosaicly gen -tag balloon -in fixtures/balloon-square.jpg -out $@
+	test -f $@ && open $@
+
+# Lint
+
+lint:
+	go fmt ./...
+	go vet ./...
+	$$GOPATH/bin/golint ./...
+
+.PHONY: lint
+
+# Test
 
 test: test_unit test_cli test_service 
 
@@ -26,20 +47,24 @@ test_cli: build
 test_service: build
 	./tests/service.sh
 
-lint:
-	go fmt ./...
-	go vet ./...
-	$$GOPATH/bin/golint ./...
+.PHONY: test test_unit test_cli test_service
+
+# Test Coverage
 
 cov_packages=mosaic instagram
-cov_files=$(addsuffix .coverage.out,$(cov_packages))
+cov_files=$(addsuffix .cov,$(cov_packages))
+cov_html=$(addsuffix .cov.html,$(cov_packages))
 
-cov: clean_cov $(cov_files)
+cov: clean_cov $(cov_files) $(cov_html)
 
 clean_cov: 
 	rm -f $(cov_files)
 
-%.coverage.out:
+%.cov:
 	go test -coverprofile=$@ ./$(firstword $(subst ., ,$@))
-	go tool cover -html=$<
+
+%.cov.html:
+	go tool cover -html=$(subst .html,,$@)
+
+.PHONY: cov clean_cov
 
